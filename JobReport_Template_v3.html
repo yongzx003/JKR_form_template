@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<!-- Tab bar zoom fix: we render the tab bar outside the main scroll container
+     so pinch-zoom on the preview doesn't swallow it -->
 <title>Job Report Template</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&family=Bebas+Neue&family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -14,15 +16,31 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; font-family: 'Source Sans 3', sans-serif; font-size: 14px; background: #1a1a2a; }
+
+/* The key trick: body is a fixed-size flex column.
+   Tab bar is a flex child at the bottom — it NEVER scrolls or zooms
+   because it's outside the scrollable panel.
+   Pinch-zoom only affects content inside the active panel's overflow scroll. */
+html { height: 100%; }
+body {
+  height: 100%; display: flex; flex-direction: column;
+  font-family: 'Source Sans 3', sans-serif; font-size: 14px;
+  background: #1a1a2a;
+  /* Prevent the whole page from being scrolled/zoomed as a unit */
+  overflow: hidden;
+  position: fixed; width: 100%;
+}
 
 /* ══════════════════════════════════════
-   TAB BAR  — always visible at bottom
+   TAB BAR — bottom flex child, never zooms
 ══════════════════════════════════════ */
 #tab-bar {
-  position: fixed; bottom: 0; left: 0; right: 0; height: var(--tab-h);
+  flex-shrink: 0;
+  height: var(--tab-h);
   background: var(--panel); border-top: 1px solid var(--panel-border);
   display: flex; z-index: 200;
+  /* Immune to pinch zoom because it's a sibling of the scroll container,
+     not inside it */
 }
 .tab-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -35,11 +53,13 @@ html, body { height: 100%; overflow: hidden; font-family: 'Source Sans 3', sans-
 .tab-btn.active { color: var(--accent); border-top-color: var(--accent); }
 
 /* ══════════════════════════════════════
-   PANELS  — fill screen above tab bar
+   PANELS — flex child that grows to fill space above tab bar
 ══════════════════════════════════════ */
+#panels-wrap {
+  flex: 1; position: relative; overflow: hidden; min-height: 0;
+}
 .panel {
-  position: fixed; top: 0; left: 0; right: 0;
-  bottom: var(--tab-h);
+  position: absolute; inset: 0;
   overflow-y: auto; overflow-x: hidden;
   display: none;
   -webkit-overflow-scrolling: touch;
@@ -197,6 +217,14 @@ textarea { resize: vertical; min-height: 60px; }
 .h-refined .inv-word { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: #000; text-align: right; letter-spacing: -1px; line-height: 1; }
 .h-refined .inv-meta { font-size: 10px; color: #444; text-align: right; line-height: 2; margin-top: 6px; }
 .h-refined .inv-meta strong { color: #000; }
+/* aligned meta table used by all themes */
+.inv-meta-tbl { border-collapse: collapse; margin-left: auto; }
+.inv-meta-tbl td { font-size: 10px; color: #444; line-height: 2; padding: 0; }
+.inv-meta-tbl .meta-lbl { font-weight: 700; color: #000; padding-right: 8px; white-space: nowrap; text-align: left; }
+.inv-meta-tbl td:last-child { text-align: left; white-space: nowrap; }
+/* bold theme — white text */
+.h-bold .inv-meta-tbl td { color: #bbb; }
+.h-bold .inv-meta-tbl .meta-lbl { color: #fff; }
 
 .h-bold { background: #000; padding: 26px 48px 22px; display: flex; justify-content: space-between; align-items: center; }
 .h-bold .co-name { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: #fff; line-height: 1; }
@@ -295,11 +323,12 @@ table.tbl td:nth-child(2) { text-align: left; }
 /* ══════════════ PRINT ══════════════ */
 @media print {
   @page { size: A4; margin: 0; }
-  html, body { height: auto; overflow: visible; }
+  html { height: auto; }
+  body { height: auto; overflow: visible; position: static; display: block; }
   #tab-bar { display: none !important; }
-  .panel { position: static; display: block !important; overflow: visible; height: auto; bottom: auto; }
-  #panel-builder { display: none !important; }
-  #panel-preview { background: white; }
+  #panels-wrap { position: static; overflow: visible; height: auto; }
+  .panel { position: static; display: none !important; overflow: visible; height: auto; }
+  #panel-preview { display: block !important; background: white; }
   #preview-inner { padding: 0; }
   .pg-lbl { display: none; }
   .a4 {
@@ -315,21 +344,8 @@ table.tbl td:nth-child(2) { text-align: left; }
 </head>
 <body>
 
-<!-- ══════════════ TAB BAR ══════════════ -->
-<div id="tab-bar">
-  <button class="tab-btn active" onclick="switchTab('builder')" id="tab-builder">
-    <span class="tab-icon">✏️</span>
-    <span>Builder</span>
-  </button>
-  <button class="tab-btn" onclick="switchTab('preview')" id="tab-preview">
-    <span class="tab-icon">📄</span>
-    <span>Preview</span>
-  </button>
-  <button class="tab-btn" onclick="window.print()" id="tab-print">
-    <span class="tab-icon">🖨️</span>
-    <span>Print</span>
-  </button>
-</div>
+<!-- ══════════════ PANELS WRAP ══════════════ -->
+<div id="panels-wrap">
 
 <!-- ══════════════ BUILDER PANEL ══════════════ -->
 <div class="panel active" id="panel-builder">
@@ -547,6 +563,24 @@ table.tbl td:nth-child(2) { text-align: left; }
 </div><!-- /preview-inner -->
 </div><!-- /panel-preview -->
 
+</div><!-- /panels-wrap -->
+
+<!-- ══════════════ TAB BAR — outside panels-wrap so zoom can't affect it ══════════════ -->
+<div id="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('builder')" id="tab-builder">
+    <span class="tab-icon">✏️</span>
+    <span>Builder</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('preview')" id="tab-preview">
+    <span class="tab-icon">📄</span>
+    <span>Preview</span>
+  </button>
+  <button class="tab-btn" onclick="window.print()" id="tab-print">
+    <span class="tab-icon">🖨️</span>
+    <span>Print</span>
+  </button>
+</div>
+
 <script>
 /* ─── State ─── */
 let theme = 'refined', addrFmt = 'stacked', items = [], photos = [];
@@ -644,7 +678,11 @@ function buildHeader() {
   const invNo = gv('f-inv-no') || '—';
   const dateF = fmtDate(gv('f-date'));
   const contract = gv('f-contract') || '—';
-  const meta = `<div><strong>Invoice No.:</strong> ${invNo}</div><div><strong>Date:</strong> ${dateF}</div><div><strong>Contract:</strong> ${contract}</div>`;
+  const meta = `<table class="inv-meta-tbl"><tbody>
+    <tr><td class="meta-lbl">Invoice No.:</td><td>${invNo}</td></tr>
+    <tr><td class="meta-lbl">Date:</td><td>${dateF}</td></tr>
+    <tr><td class="meta-lbl">Contract:</td><td>${contract}</td></tr>
+  </tbody></table>`;
   const ac = addrFmt === 'compact' ? ' addr-compact' : '';
 
   const map = {
@@ -663,7 +701,7 @@ function buildHeader() {
     </div>`,
     modern: `<div class="h-modern${ac}">
       <div><div class="co-name">${name}${regStr}</div><div class="co-addr-wrap">${addr}</div></div>
-      <div><div class="inv-label">Invoice</div><div class="inv-num">${invNo}</div><div class="inv-meta"><div><strong>Date:</strong> ${dateF}</div><div><strong>Contract:</strong> ${contract}</div></div></div>
+      <div><div class="inv-label">Invoice</div><div class="inv-num">${invNo}</div><div class="inv-meta"><table class="inv-meta-tbl"><tbody><tr><td class="meta-lbl">Date:</td><td>${dateF}</td></tr><tr><td class="meta-lbl">Contract:</td><td>${contract}</td></tr></tbody></table></div></div>
     </div>`,
   };
   return map[theme] || map.refined;
