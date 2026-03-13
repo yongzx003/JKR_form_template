@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Job Report Template</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&family=Bebas+Neue&family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ─── VARIABLES ─── */
+:root {
+  --panel: #111827; --panel2: #1f2937; --panel-border: #374151;
+  --accent: #c8a96e; --text: #f9fafb; --muted: #9ca3af;
+  --tab-h: 52px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: 'Source Sans 3', sans-serif; font-size: 14px; background: #1a1a2a; }
+
+/* ══════════════════════════════════════
+   TAB BAR  — always visible at bottom
+══════════════════════════════════════ */
+#tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; height: var(--tab-h);
+  background: var(--panel); border-top: 1px solid var(--panel-border);
+  display: flex; z-index: 200;
+}
+.tab-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; background: none; border: none; color: var(--muted);
+  font-family: 'Source Sans 3', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.5px; cursor: pointer; transition: color 0.15s;
+  border-top: 2px solid transparent; padding-top: 2px;
+}
+.tab-btn .tab-icon { font-size: 18px; line-height: 1; }
+.tab-btn.active { color: var(--accent); border-top-color: var(--accent); }
+
+/* ══════════════════════════════════════
+   PANELS  — fill screen above tab bar
+══════════════════════════════════════ */
+.panel {
+  position: fixed; top: 0; left: 0; right: 0;
+  bottom: var(--tab-h);
+  overflow-y: auto; overflow-x: hidden;
+  display: none;
+  -webkit-overflow-scrolling: touch;
+}
+.panel.active { display: block; }
+
+/* ══════════════════════════════════════
+   BUILDER PANEL
+══════════════════════════════════════ */
+#panel-builder {
+  background: var(--panel); color: var(--text);
+}
+#builder-inner {
+  max-width: 520px; margin: 0 auto;
+  padding: 16px 16px 24px;
+}
+
+.sec {
+  font-size: 8.5px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--accent); border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 5px; margin: 20px 0 10px;
+}
+.sec:first-child { margin-top: 4px; }
+
+label { display: block; font-size: 11px; color: var(--muted); margin: 10px 0 3px; }
+input[type=text], input[type=date], textarea {
+  width: 100%; background: var(--panel2); border: 1px solid var(--panel-border);
+  border-radius: 5px; color: var(--text); font-family: 'Source Sans 3', sans-serif;
+  font-size: 14px; padding: 9px 11px; outline: none; transition: border-color 0.15s;
+  /* prevent iOS zoom on focus (font-size >= 16px would also work) */
+  touch-action: manipulation;
+}
+input:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 60px; }
+
+/* theme picker */
+.theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.t-opt {
+  border: 2px solid var(--panel-border); border-radius: 6px; padding: 10px;
+  cursor: pointer; background: var(--panel2); transition: border-color 0.15s;
+}
+.t-opt.active { border-color: var(--accent); }
+.t-swatch { height: 4px; border-radius: 2px; margin-bottom: 6px; }
+.t-name { font-size: 12px; font-weight: 700; color: var(--text); }
+.t-desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* addr format */
+.addr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 6px; }
+.a-opt {
+  border: 2px solid var(--panel-border); border-radius: 5px; padding: 8px 6px;
+  cursor: pointer; background: var(--panel2); text-align: center; transition: border-color 0.15s;
+}
+.a-opt.active { border-color: var(--accent); }
+.a-opt-name { font-size: 11px; font-weight: 600; color: var(--text); }
+.a-opt-preview { font-size: 9px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+
+/* invoice items */
+#items-wrap { display: flex; flex-direction: column; gap: 8px; }
+.irow {
+  background: var(--panel2); border: 1px solid var(--panel-border);
+  border-radius: 6px; padding: 10px 12px; position: relative;
+}
+.irow-n { font-size: 9px; color: var(--accent); font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
+.irow label { margin: 0 0 3px; font-size: 10px; }
+.irow input { font-size: 13px; padding: 7px 9px; }
+.irow-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; margin-top: 8px; }
+.rm {
+  position: absolute; top: 8px; right: 10px;
+  background: none; border: none; color: #4b5563; cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 2px 4px;
+}
+.rm:active { color: #ef4444; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; font-family: 'Source Sans 3', sans-serif;
+  transition: all 0.15s; touch-action: manipulation;
+}
+.btn-ghost {
+  background: transparent; border: 1px solid var(--panel-border);
+  color: var(--muted); width: 100%; margin-top: 8px;
+}
+.btn-print { background: var(--accent); color: #1a1200; font-weight: 700; flex: 1; }
+.btn-save  { background: #1e3a2f; color: #6ee7b7; border: 1px solid #2d5a45; flex: 1; }
+.action-row { display: flex; gap: 8px; margin-top: 4px; }
+
+/* photo editor */
+.pblk {
+  background: var(--panel2); border: 1px solid var(--panel-border);
+  border-radius: 6px; padding: 10px 12px; margin-bottom: 8px;
+}
+.pblk-hd {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 10px; color: var(--accent); font-weight: 700; margin-bottom: 8px;
+}
+.pblk-hd button { background: none; border: none; color: #4b5563; cursor: pointer; font-size: 18px; }
+.pslots { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 6px; }
+.pslot label { font-size: 10px; color: var(--muted); margin-bottom: 3px; text-align: center; display: block; }
+.ppick {
+  aspect-ratio: 1; background: #0f172a; border: 1.5px dashed #374151; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 20px; color: #374151;
+  overflow: hidden; position: relative; touch-action: manipulation;
+}
+.ppick img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ppick input[type=file] { display: none; }
+.add-ph { display: flex; gap: 6px; margin-top: 8px; }
+.add-ph input { flex: 1; }
+.add-ph-btn {
+  background: var(--panel2); border: 1px solid var(--panel-border); color: var(--muted);
+  border-radius: 5px; padding: 0 14px; cursor: pointer; font-size: 22px; font-weight: 300;
+  touch-action: manipulation; flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════
+   PREVIEW PANEL
+══════════════════════════════════════ */
+#panel-preview {
+  background: #d1cdc5;
+  /* overflow already set on .panel */
+}
+#preview-inner {
+  /* Pages sit inside here, scaled by JS */
+  padding: 16px 0 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+}
+.pg-lbl {
+  font-size: 8px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: #777; align-self: flex-start; padding-left: 12px;
+  margin-top: 16px; margin-bottom: 4px;
+}
+.pg-lbl:first-child { margin-top: 0; }
+
+/* A4 page — always 794px internally, scaled by JS */
+.a4 {
+  width: 794px; min-height: 1123px;
+  background: #fff; box-shadow: 0 2px 20px rgba(0,0,0,0.18);
+  display: flex; flex-direction: column;
+  transform-origin: top center;
+  transform: scale(var(--pg-scale, 1));
+  margin-bottom: calc((var(--pg-scale, 1) - 1) * 1123px);
+  margin-top: 4px;
+}
+
+/* ══════════════════════════════════════
+   HEADER THEMES
+══════════════════════════════════════ */
+.h-refined {
+  padding: 44px 48px 20px; border-bottom: 2.5px solid #000;
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.h-refined .co-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #000; }
+.h-refined .co-addr-wrap { font-size: 10px; color: #444; line-height: 1.75; margin-top: 5px; }
+.h-refined .inv-word { font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: #000; text-align: right; letter-spacing: -1px; line-height: 1; }
+.h-refined .inv-meta { font-size: 10px; color: #444; text-align: right; line-height: 2; margin-top: 6px; }
+.h-refined .inv-meta strong { color: #000; }
+
+.h-bold { background: #000; padding: 26px 48px 22px; display: flex; justify-content: space-between; align-items: center; }
+.h-bold .co-name { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: #fff; line-height: 1; }
+.h-bold .co-reg-tag { font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 2px; }
+.h-bold .co-addr-wrap { font-size: 9.5px; color: #bbb; line-height: 1.8; margin-top: 7px; }
+.h-bold .inv-word { font-family: 'Bebas Neue', sans-serif; font-size: 44px; color: #fff; letter-spacing: 4px; text-align: right; line-height: 1; }
+.h-bold .inv-meta { font-size: 9.5px; color: #bbb; text-align: right; line-height: 2.1; margin-top: 6px; }
+.h-bold .inv-meta strong { color: #fff; }
+
+.h-traditional { padding: 36px 48px 20px; border-top: 4px double #000; border-bottom: 4px double #000; text-align: center; }
+.h-traditional .co-name { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 700; color: #000; letter-spacing: 1px; }
+.h-traditional .co-addr-wrap { font-size: 10px; color: #444; line-height: 1.8; margin-top: 4px; }
+.h-traditional .inv-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid #ccc; }
+.h-traditional .inv-word { font-family: 'Cormorant Garamond', serif; font-size: 19px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; border: 1.5px solid #000; padding: 3px 14px; }
+.h-traditional .inv-meta { font-size: 10px; color: #444; text-align: right; line-height: 2; }
+.h-traditional .inv-meta strong { color: #000; }
+
+.h-modern { padding: 36px 48px 20px; border-bottom: 1px solid #000; display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: start; }
+.h-modern .co-name { font-family: 'DM Sans', sans-serif; font-size: 19px; font-weight: 700; color: #000; letter-spacing: -0.3px; }
+.h-modern .co-addr-wrap { font-size: 10px; color: #555; line-height: 1.8; margin-top: 8px; font-weight: 300; }
+.h-modern .inv-label { font-family: 'DM Sans', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: #000; text-align: right; }
+.h-modern .inv-num { font-family: 'DM Sans', sans-serif; font-size: 28px; font-weight: 300; color: #000; letter-spacing: -1px; text-align: right; margin-top: 4px; }
+.h-modern .inv-meta { font-size: 10px; color: #555; text-align: right; line-height: 2; margin-top: 4px; }
+.h-modern .inv-meta strong { color: #000; font-weight: 600; }
+
+/* Address format variants */
+.addr-compact .co-addr-wrap { font-size: 9px !important; line-height: 1.6 !important; }
+
+/* ══════════════════════════════════════
+   INVOICE BODY (same for all themes, B&W)
+══════════════════════════════════════ */
+.inv-body { padding: 20px 48px 40px; flex: 1; display: flex; flex-direction: column; }
+.h-bold + .inv-body { padding-top: 22px; }
+
+.inv-to { margin-bottom: 14px; }
+.inv-to-lbl { font-size: 8px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #000; margin-bottom: 4px; border-bottom: 1px solid #000; padding-bottom: 2px; display: inline-block; }
+.inv-to-val { font-size: 11.5px; line-height: 1.75; margin-top: 4px; }
+.inv-title-bar { border: 1px solid #000; padding: 8px 12px; margin-bottom: 0; }
+.inv-title-lbl { font-size: 7.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #555; margin-bottom: 2px; }
+.inv-title-val { font-size: 11.5px; font-weight: 600; line-height: 1.5; }
+
+table.tbl { width: 100%; border-collapse: collapse; }
+table.tbl th { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #000; padding: 7px 8px; text-align: right; border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; }
+table.tbl th:nth-child(1), table.tbl th:nth-child(2) { text-align: left; }
+table.tbl td { padding: 7px 8px; font-size: 11px; border-bottom: 0.5px solid #ccc; vertical-align: top; line-height: 1.5; text-align: right; }
+table.tbl td:nth-child(1) { font-weight: 700; color: #000; font-size: 10px; text-align: left; }
+table.tbl td:nth-child(2) { text-align: left; }
+
+.totals { border-top: 1.5px solid #000; display: flex; justify-content: flex-end; }
+.totals-inner { width: 230px; }
+.tot-row { display: flex; justify-content: space-between; padding: 6px 8px; font-size: 11px; color: #333; border-bottom: 0.5px solid #ddd; }
+.tot-row.grand { border-top: 1.5px solid #000; border-bottom: none; font-weight: 700; font-size: 12px; color: #000; padding: 7px 8px; }
+
+.inv-foot { margin-top: 30px; padding-top: 14px; border-top: 0.5px solid #999; display: flex; justify-content: space-between; align-items: flex-end; }
+.inv-prep { font-size: 11px; color: #333; }
+.inv-prep strong { display: block; margin-top: 22px; font-size: 12px; color: #000; }
+.inv-note { font-size: 9px; color: #666; text-align: right; line-height: 1.7; }
+
+/* ══════════════ PHOTO PAGES ══════════════ */
+.photo-pg { padding: 36px 40px 28px; }
+.photo-pg-hd { border-bottom: 1.5px solid #000; padding-bottom: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
+.photo-pg-co { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: #000; }
+.photo-pg-title { font-size: 9px; color: #555; max-width: 380px; line-height: 1.5; margin-top: 2px; }
+.photo-pg-badge { font-size: 8px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #000; }
+.col-heads { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 0 0 5px 30px; }
+.col-head { text-align: center; font-size: 8px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #333; padding-bottom: 3px; border-bottom: 1px solid #000; }
+.photo-item { display: grid; grid-template-columns: 26px 1fr; gap: 5px; margin-bottom: 12px; align-items: start; }
+.photo-item-n { font-size: 10px; font-weight: 700; color: #000; padding-top: 2px; }
+.photo-item-d { font-size: 8.5px; color: #555; font-style: italic; line-height: 1.4; margin-bottom: 4px; }
+.photo-cells { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+.photo-cell { aspect-ratio: 4/3; background: #f0f0f0; border: 0.5px solid #ccc; border-radius: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.photo-cell img { width: 100%; height: 100%; object-fit: cover; }
+.photo-cell-empty { font-size: 8px; color: #bbb; font-style: italic; }
+.photo-pg-foot { margin-top: auto; padding-top: 10px; border-top: 0.5px solid #ccc; font-size: 8px; color: #888; text-align: right; }
+
+/* ══════════════ LETTER PAGES ══════════════ */
+.letter-pg { padding: 48px 56px 44px; }
+.letter-hd { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 24px; }
+.letter-co { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #000; }
+.letter-addr { font-size: 10px; color: #444; margin-top: 3px; line-height: 1.75; }
+.letter-date { font-size: 11.5px; color: #333; margin-bottom: 16px; }
+.letter-date strong { color: #000; }
+.letter-to { font-size: 11.5px; line-height: 1.8; margin-bottom: 16px; color: #000; }
+.subj-blk { border-left: 3px solid #000; padding: 8px 12px; margin-bottom: 20px; background: #f8f8f8; }
+.subj-lbl { font-size: 8px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #333; margin-bottom: 2px; }
+.subj-val { font-size: 11.5px; font-weight: 600; line-height: 1.5; }
+.perkara { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 16px; color: #000; }
+.lbody { font-size: 12px; line-height: 2.1; color: #000; }
+.lbody p { margin-bottom: 10px; }
+.pn { font-weight: 700; }
+.lsign { margin-top: 38px; }
+.lsign-yang { font-size: 11.5px; color: #333; margin-bottom: 28px; }
+.lsign-line { width: 180px; border-top: 1px solid #000; padding-top: 4px; font-size: 12px; font-weight: 700; color: #000; }
+.lsign-co { font-size: 11px; color: #444; margin-top: 2px; }
+
+/* ══════════════ PRINT ══════════════ */
+@media print {
+  @page { size: A4; margin: 0; }
+  html, body { height: auto; overflow: visible; }
+  #tab-bar { display: none !important; }
+  .panel { position: static; display: block !important; overflow: visible; height: auto; bottom: auto; }
+  #panel-builder { display: none !important; }
+  #panel-preview { background: white; }
+  #preview-inner { padding: 0; }
+  .pg-lbl { display: none; }
+  .a4 {
+    width: 210mm; min-height: 297mm; box-shadow: none;
+    page-break-after: always;
+    transform: none !important;
+    margin: 0 !important;
+  }
+  .a4:last-child { page-break-after: avoid; }
+  .h-bold { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ TAB BAR ══════════════ -->
+<div id="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('builder')" id="tab-builder">
+    <span class="tab-icon">✏️</span>
+    <span>Builder</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('preview')" id="tab-preview">
+    <span class="tab-icon">📄</span>
+    <span>Preview</span>
+  </button>
+  <button class="tab-btn" onclick="window.print()" id="tab-print">
+    <span class="tab-icon">🖨️</span>
+    <span>Print</span>
+  </button>
+</div>
+
+<!-- ══════════════ BUILDER PANEL ══════════════ -->
+<div class="panel active" id="panel-builder">
+<div id="builder-inner">
+
+  <div class="sec">Header Design</div>
+
+  <label>Layout Style</label>
+  <div class="theme-grid">
+    <div class="t-opt active" data-theme="refined" onclick="setTheme('refined',this)">
+      <div class="t-swatch" style="background:linear-gradient(90deg,#000 60%,#fff 60%);border:1px solid #333"></div>
+      <div class="t-name">Refined</div>
+      <div class="t-desc">Serif · side-by-side</div>
+    </div>
+    <div class="t-opt" data-theme="bold" onclick="setTheme('bold',this)">
+      <div class="t-swatch" style="background:#000"></div>
+      <div class="t-name">Bold</div>
+      <div class="t-desc">Dark band · large INVOICE</div>
+    </div>
+    <div class="t-opt" data-theme="traditional" onclick="setTheme('traditional',this)">
+      <div class="t-swatch" style="background:repeating-linear-gradient(90deg,#000 0,#000 3px,#fff 3px,#fff 8px)"></div>
+      <div class="t-name">Traditional</div>
+      <div class="t-desc">Centred · double border</div>
+    </div>
+    <div class="t-opt" data-theme="modern" onclick="setTheme('modern',this)">
+      <div class="t-swatch" style="background:#fff;border-bottom:2px solid #000"></div>
+      <div class="t-name">Modern</div>
+      <div class="t-desc">Minimal · sans-serif</div>
+    </div>
+  </div>
+
+  <label style="margin-top:14px">Address Format</label>
+  <div class="addr-grid">
+    <div class="a-opt active" data-addr="stacked" onclick="setAddr('stacked',this)">
+      <div class="a-opt-name">Stacked</div>
+      <div class="a-opt-preview">Line 1<br>Line 2<br>City</div>
+    </div>
+    <div class="a-opt" data-addr="inline" onclick="setAddr('inline',this)">
+      <div class="a-opt-name">Inline</div>
+      <div class="a-opt-preview">Line 1 · Line 2 · City</div>
+    </div>
+    <div class="a-opt" data-addr="compact" onclick="setAddr('compact',this)">
+      <div class="a-opt-name">Compact</div>
+      <div class="a-opt-preview" style="font-size:8px">Line 1, Line 2<br>City · Email</div>
+    </div>
+  </div>
+
+  <div class="sec">Company Details</div>
+  <label>Company Name</label>
+  <input type="text" id="f-co-name" oninput="update()">
+  <label>Registration No. (optional)</label>
+  <input type="text" id="f-co-reg" placeholder="e.g. (155994T)" oninput="update()">
+  <label>Address Line 1</label>
+  <input type="text" id="f-co-a1" oninput="update()">
+  <label>Address Line 2</label>
+  <input type="text" id="f-co-a2" oninput="update()">
+  <label>City / Postcode</label>
+  <input type="text" id="f-co-city" oninput="update()">
+  <label>State</label>
+  <input type="text" id="f-co-state" oninput="update()">
+  <label>Email (optional)</label>
+  <input type="text" id="f-co-email" placeholder="e.g. info@example.com" oninput="update()">
+  <label>Tel (optional)</label>
+  <input type="text" id="f-co-tel" placeholder="e.g. 088-728 996" oninput="update()">
+
+  <div class="sec">Job Information</div>
+  <label>Invoice Number</label>
+  <input type="text" id="f-inv-no" oninput="update()">
+  <label>Date</label>
+  <input type="date" id="f-date" oninput="update()">
+  <label>Contract / Reference No.</label>
+  <input type="text" id="f-contract" oninput="update()">
+  <label>Project Title (English)</label>
+  <textarea id="f-title-en" rows="2" oninput="update()"></textarea>
+  <label>Project Title (Malay – for letters)</label>
+  <textarea id="f-title-ms" rows="2" oninput="update()"></textarea>
+
+  <div class="sec">Client (Kepada)</div>
+  <label>Department / Name</label>
+  <input type="text" id="f-cl-name" oninput="update()">
+  <label>Address Line 1</label>
+  <input type="text" id="f-cl-a1" oninput="update()">
+  <label>Address Line 2</label>
+  <input type="text" id="f-cl-a2" oninput="update()">
+
+  <div class="sec">Invoice Line Items</div>
+  <div id="items-wrap"></div>
+  <button class="btn btn-ghost" onclick="addItem()">+ Add Line Item</button>
+
+  <div class="sec">Before / Progress / After Photos</div>
+  <div id="photo-ed"></div>
+  <div class="add-ph">
+    <input type="text" id="new-ph-desc" placeholder="Description for new photo row…">
+    <button class="add-ph-btn" onclick="addPhoto()">+</button>
+  </div>
+
+  <div class="sec">Signatory</div>
+  <label>Prepared By (Name)</label>
+  <input type="text" id="f-sign" oninput="update()">
+  <label>IC Number (for SST letter)</label>
+  <input type="text" id="f-ic" oninput="update()">
+
+  <div class="sec">Save / Load</div>
+  <div class="action-row">
+    <button class="btn btn-save" onclick="saveDraft()">💾 Save Draft</button>
+    <label style="margin:0;flex:1;cursor:pointer">
+      <span class="btn" style="background:#1e2a3a;color:#93c5fd;border:1px solid #2d3f5a;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 16px;border-radius:6px;font-size:13px;font-weight:600">📂 Load Draft</span>
+      <input type="file" accept=".json" style="display:none" onchange="loadDraft(event)">
+    </label>
+  </div>
+
+</div><!-- /builder-inner -->
+</div><!-- /panel-builder -->
+
+<!-- ══════════════ PREVIEW PANEL ══════════════ -->
+<div class="panel" id="panel-preview">
+<div id="preview-inner">
+
+  <div class="pg-lbl">Invoice</div>
+  <div class="a4" id="inv-page">
+    <div id="inv-head-slot"></div>
+    <div class="inv-body">
+      <div class="inv-to">
+        <div class="inv-to-lbl">Kepada / Bill To</div>
+        <div class="inv-to-val" id="p-client">—</div>
+      </div>
+      <div class="inv-title-bar">
+        <div class="inv-title-lbl">Title / Projek</div>
+        <div class="inv-title-val" id="p-title">—</div>
+      </div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th style="width:36px">Item</th>
+            <th>Description</th>
+            <th style="width:40px">Qty</th>
+            <th style="width:48px">Unit</th>
+            <th style="width:70px">Rate (RM)</th>
+            <th style="width:76px">Amount (RM)</th>
+          </tr>
+        </thead>
+        <tbody id="p-items"></tbody>
+      </table>
+      <div class="totals">
+        <div class="totals-inner">
+          <div class="tot-row"><span>Sub-Total</span><span id="p-sub">RM 0.00</span></div>
+          <div class="tot-row"><span>SST 8%</span><span>—</span></div>
+          <div class="tot-row grand"><span>TOTAL</span><span id="p-total">RM 0.00</span></div>
+        </div>
+      </div>
+      <div class="inv-foot">
+        <div class="inv-prep">Prepared by: <strong id="p-sign">—</strong><span id="p-co-foot"></span></div>
+        <div class="inv-note">Syarikat tidak berdaftar SST.<br>Tiada SST dikenakan.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="photo-pages"></div>
+
+  <div class="pg-lbl">SST Declaration Letter</div>
+  <div class="a4 letter-pg">
+    <div class="letter-hd">
+      <div class="letter-co" id="l-co">—</div>
+      <div class="letter-addr" id="l-addr">—</div>
+    </div>
+    <div class="letter-date">Tarikh: <strong id="l-date">—</strong></div>
+    <div class="letter-to" id="l-to">—</div>
+    <div class="letter-to">Tuan,</div>
+    <div class="subj-blk">
+      <div class="subj-lbl">Kontrak No. / Projek</div>
+      <div class="subj-val" id="l-subj">—</div>
+    </div>
+    <div class="perkara">Perkara: Pengesahan Tidak Berdaftar Sales and Service Tax (SST) Syarikat</div>
+    <div class="lbody">
+      <p>Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
+      <p><span class="pn">2.</span> Bahawasanya saya <strong id="l-owner">—</strong> (NO IC: <strong id="l-ic">—</strong>) pemilik Syarikat <strong id="l-co2">—</strong> mengesahkan bahawa syarikat kami tidak berdaftar untuk SALES AND SERVICE TAX (SST) di Jabatan Kastam Diraja Malaysia.</p>
+      <p><span class="pn">3.</span> Disebabkan syarikat kami tidak mempunyai nilai Perkhidmatan Bercukai RM500,000.00 yang ditetapkan dalam tempoh 12 bulan. Oleh itu, pihak syarikat tidak akan menuntut sebarang cukai SST daripada pihak Jabatan untuk sebarang tuntutan bayaran syarikat kami.</p>
+      <p><span class="pn">4.</span> Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai. Sebarang perubahan akan dimaklumkan kelak.</p>
+      <p>Sekian, terima kasih.</p>
+    </div>
+    <div class="lsign">
+      <div class="lsign-yang">Yang benar,</div>
+      <div class="lsign-line" id="l-sign">—</div>
+      <div class="lsign-co" id="l-sco">—</div>
+    </div>
+  </div>
+
+  <div class="pg-lbl">No Outstanding Wages Letter</div>
+  <div class="a4 letter-pg">
+    <div class="letter-hd">
+      <div class="letter-co" id="w-co">—</div>
+      <div class="letter-addr" id="w-addr">—</div>
+    </div>
+    <div class="letter-date">Tarikh: <strong id="w-date">—</strong></div>
+    <div class="letter-to" id="w-to">—</div>
+    <div class="letter-to">Tuan,</div>
+    <div class="subj-blk">
+      <div class="subj-lbl">Kontrak No. / Projek</div>
+      <div class="subj-val" id="w-subj">—</div>
+    </div>
+    <div class="perkara">Perkara: Pengesahan Tiada Gaji Yang Tertunggak</div>
+    <div class="lbody">
+      <p>Dengan segala hormatnya perkara di atas adalah dirujuk.</p>
+      <p><span class="pn">2.</span> Untuk makluman pihak Tuan, <em>"Tiada gaji yang tertunggak kepada pekerja-pekerja melainkan di mana sijil ini disediakan"</em>.</p>
+      <p><span class="pn">3.</span> Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai.</p>
+      <p>Sekian, terima kasih.</p>
+    </div>
+    <div class="lsign">
+      <div class="lsign-yang">Yang benar,</div>
+      <div class="lsign-line" id="w-sign">—</div>
+      <div class="lsign-co" id="w-sco">—</div>
+    </div>
+  </div>
+
+</div><!-- /preview-inner -->
+</div><!-- /panel-preview -->
+
+<script>
+/* ─── State ─── */
+let theme = 'refined', addrFmt = 'stacked', items = [], photos = [];
+
+/* ─── Tab switching ─── */
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'preview') rescale();
+}
+
+/* ─── Scale preview to fit screen ─── */
+function rescale() {
+  const pad = 12;
+  const scale = Math.min(1, (window.innerWidth - pad * 2) / 794);
+  document.documentElement.style.setProperty('--pg-scale', scale);
+}
+window.addEventListener('resize', rescale);
+rescale();
+
+/* ─── Helpers ─── */
+function sv(id, v) { const e = document.getElementById(id); if (e) e.value = v; }
+function gv(id) { return (document.getElementById(id)?.value || '').trim(); }
+function si(id, h) { const e = document.getElementById(id); if (e) e.innerHTML = h; }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+function fmtDate(v) {
+  if (!v) return '—';
+  try { return new Date(v).toLocaleDateString('en-GB', {day:'2-digit',month:'long',year:'numeric'}); }
+  catch { return v; }
+}
+
+/* ─── Init ─── */
+window.onload = () => {
+  sv('f-co-name','ABR Services');
+  sv('f-co-a1','Lot F-2-10, 2nd Floor, Block F, Plaza Tanjung Aru');
+  sv('f-co-a2','Jalan Mat Salleh');
+  sv('f-co-city','88100 Kota Kinabalu');
+  sv('f-co-state','Sabah');
+  sv('f-co-email',''); sv('f-co-tel',''); sv('f-co-reg','');
+  sv('f-inv-no','JKR 2025 0123');
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  sv('f-contract','JBN 53 AC 194554');
+  sv('f-title-en','Repair Works – To Replace Damaged Lock Set, Bidet Spray, Water Tap and Other Related Works at JBKK Office');
+  sv('f-title-ms','Kerja Pembaikan – Menggantikan Lock Set, Bidet Spray, Paip Air dan Kerja-Kerja Berkaitan di Pejabat JBKK');
+  sv('f-cl-name','Jurutera Bahagian');
+  sv('f-cl-a1','Kawasan Pantai Barat Tengah, JKR, Kota Kinabalu');
+  sv('f-cl-a2','Sabah.');
+  sv('f-sign','Asram Bin Rasmun');
+  sv('f-ic','830601-12-5195');
+
+  items = [
+    {desc:'Preliminaries', qty:'', unit:'SUM', rate:'', amount:'650.00'},
+    {desc:'To replace damage door lock set at male and female toilet near Mini Hall.', qty:'2', unit:'NOS', rate:'80.00', amount:''},
+    {desc:'To fabricate and install custom laser cut signage – Jurutera Bahagian Room (150mm H × 635mm L)', qty:'1', unit:'NOS', rate:'700.00', amount:''},
+    {desc:'To fabricate and install custom laser cut signage – PA Room (150mm H × 455mm L)', qty:'1', unit:'NOS', rate:'550.00', amount:''},
+    {desc:'To repair damage wall at PA Room.', qty:'', unit:'SUM', rate:'', amount:'700.00'},
+  ];
+  photos = [{desc:'Door lock set – Item 2', before:null, progress:null, after:null}];
+  renderItems(); renderPhotoEd(); update();
+};
+
+/* ─── Theme / addr ─── */
+function setTheme(t, el) {
+  theme = t;
+  document.querySelectorAll('.t-opt').forEach(o => o.classList.toggle('active', o.dataset.theme === t));
+  update();
+}
+function setAddr(f, el) {
+  addrFmt = f;
+  document.querySelectorAll('.a-opt').forEach(o => o.classList.toggle('active', o.dataset.addr === f));
+  update();
+}
+
+/* ─── Build address string ─── */
+function buildAddr(forLetter) {
+  const a1 = gv('f-co-a1'), a2 = gv('f-co-a2');
+  const city = gv('f-co-city'), state = gv('f-co-state');
+  const email = gv('f-co-email'), tel = gv('f-co-tel');
+  const parts = [a1, a2, [city, state].filter(Boolean).join(', ')].filter(Boolean);
+  const contact = [email ? `Email: ${email}` : '', tel ? `Tel: ${tel}` : ''].filter(Boolean);
+  if (forLetter) return [...parts, ...contact].join(', ');
+  if (addrFmt === 'inline') return [...parts, ...contact].join(' · ');
+  if (addrFmt === 'compact') return [[...parts].join(', '), contact.join(' · ')].filter(Boolean).join('<br>');
+  return [...parts, ...contact].join('<br>'); // stacked
+}
+
+/* ─── Build header HTML ─── */
+function buildHeader() {
+  const name = gv('f-co-name') || '—';
+  const reg  = gv('f-co-reg');
+  const regStr = reg ? ` <span style="font-weight:400;font-size:13px">(${reg})</span>` : '';
+  const addr = buildAddr(false);
+  const invNo = gv('f-inv-no') || '—';
+  const dateF = fmtDate(gv('f-date'));
+  const contract = gv('f-contract') || '—';
+  const meta = `<div><strong>Invoice No.:</strong> ${invNo}</div><div><strong>Date:</strong> ${dateF}</div><div><strong>Contract:</strong> ${contract}</div>`;
+  const ac = addrFmt === 'compact' ? ' addr-compact' : '';
+
+  const map = {
+    refined: `<div class="h-refined${ac}">
+      <div><div class="co-name">${name}${regStr}</div><div class="co-addr-wrap">${addr}</div></div>
+      <div><div class="inv-word">INVOICE</div><div class="inv-meta">${meta}</div></div>
+    </div>`,
+    bold: `<div class="h-bold${ac}">
+      <div><div class="co-name">${name}</div>${reg?`<div class="co-reg-tag">${reg}</div>`:''}<div class="co-addr-wrap">${addr}</div></div>
+      <div><div class="inv-word">INVOICE</div><div class="inv-meta">${meta}</div></div>
+    </div>`,
+    traditional: `<div class="h-traditional${ac}">
+      <div class="co-name">${name}${regStr}</div>
+      <div class="co-addr-wrap">${addr}</div>
+      <div class="inv-row"><div class="inv-word">INVOICE</div><div class="inv-meta">${meta}</div></div>
+    </div>`,
+    modern: `<div class="h-modern${ac}">
+      <div><div class="co-name">${name}${regStr}</div><div class="co-addr-wrap">${addr}</div></div>
+      <div><div class="inv-label">Invoice</div><div class="inv-num">${invNo}</div><div class="inv-meta"><div><strong>Date:</strong> ${dateF}</div><div><strong>Contract:</strong> ${contract}</div></div></div>
+    </div>`,
+  };
+  return map[theme] || map.refined;
+}
+
+/* ─── Main update ─── */
+function update() {
+  si('inv-head-slot', buildHeader());
+
+  si('p-client', [gv('f-cl-name'),gv('f-cl-a1'),gv('f-cl-a2')].filter(Boolean).join('<br>') || '—');
+  si('p-title', gv('f-title-en') || '—');
+
+  let sub = 0;
+  const tbody = document.getElementById('p-items');
+  tbody.innerHTML = '';
+  items.forEach((item, i) => {
+    const qty = parseFloat(item.qty) || 0, rate = parseFloat(item.rate) || 0;
+    let amt = parseFloat(item.amount);
+    if (isNaN(amt)) amt = (qty && rate) ? qty * rate : 0;
+    sub += amt;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${item.desc||''}</td><td>${item.qty||''}</td><td>${item.unit||''}</td><td>${item.rate?parseFloat(item.rate).toFixed(2):''}</td><td>${amt?amt.toFixed(2):''}</td>`;
+    tbody.appendChild(tr);
+  });
+  si('p-sub', `RM ${sub.toFixed(2)}`);
+  si('p-total', `RM ${sub.toFixed(2)}`);
+  si('p-sign', gv('f-sign') || '—');
+  si('p-co-foot', gv('f-co-name') ? `<br>${gv('f-co-name')}` : '');
+
+  const coName = gv('f-co-name') || '—';
+  const addrLetter = buildAddr(true);
+  const dateF = fmtDate(gv('f-date'));
+  const subject = [gv('f-contract'), gv('f-title-ms') || gv('f-title-en')].filter(Boolean).join(' – ') || '—';
+  const toBlock = [gv('f-cl-name'),gv('f-cl-a1'),gv('f-cl-a2')].filter(Boolean).join(',<br>') || '—';
+
+  ['l-co','w-co'].forEach(id => si(id, coName));
+  ['l-addr','w-addr'].forEach(id => si(id, addrLetter));
+  ['l-date','w-date'].forEach(id => si(id, dateF));
+  ['l-to','w-to'].forEach(id => si(id, toBlock));
+  ['l-subj','w-subj'].forEach(id => si(id, subject));
+  si('l-owner', gv('f-sign') || '—');
+  si('l-ic', gv('f-ic') || '—');
+  si('l-co2', coName);
+  ['l-sign','w-sign'].forEach(id => si(id, gv('f-sign') || '—'));
+  ['l-sco','w-sco'].forEach(id => si(id, coName));
+
+  renderPhotoPgs();
+}
+
+/* ─── Items editor ─── */
+function renderItems() {
+  const c = document.getElementById('items-wrap');
+  c.innerHTML = '';
+  items.forEach((item, i) => {
+    const d = document.createElement('div');
+    d.className = 'irow';
+    d.innerHTML = `
+      <div class="irow-n">ITEM ${i+1}</div>
+      <button class="rm" onclick="removeItem(${i})">✕</button>
+      <label>Description</label>
+      <input type="text" value="${esc(item.desc)}" oninput="items[${i}].desc=this.value;update()">
+      <div class="irow-grid">
+        <div><label>Qty</label><input type="text" value="${esc(item.qty)}" oninput="items[${i}].qty=this.value;update()"></div>
+        <div><label>Unit</label><input type="text" value="${esc(item.unit)}" oninput="items[${i}].unit=this.value;update()"></div>
+        <div><label>Rate</label><input type="text" value="${esc(item.rate)}" oninput="items[${i}].rate=this.value;update()"></div>
+        <div><label>Amount</label><input type="text" value="${esc(item.amount)}" placeholder="auto" oninput="items[${i}].amount=this.value;update()"></div>
+      </div>`;
+    c.appendChild(d);
+  });
+}
+function addItem() { items.push({desc:'',qty:'',unit:'NOS',rate:'',amount:''}); renderItems(); update(); }
+function removeItem(i) { items.splice(i,1); renderItems(); update(); }
+
+/* ─── Photo editor ─── */
+function renderPhotoEd() {
+  const c = document.getElementById('photo-ed');
+  c.innerHTML = '';
+  photos.forEach((blk, bi) => {
+    const d = document.createElement('div');
+    d.className = 'pblk';
+    d.innerHTML = `
+      <div class="pblk-hd"><span>Row ${bi+1}</span><button onclick="removePhoto(${bi})">✕</button></div>
+      <input type="text" value="${esc(blk.desc)}" placeholder="Item description…" oninput="photos[${bi}].desc=this.value;renderPhotoPgs()">
+      <div class="pslots">
+        ${['before','progress','after'].map(s=>`
+          <div class="pslot">
+            <label>${s.charAt(0).toUpperCase()+s.slice(1)}</label>
+            <div class="ppick" onclick="document.getElementById('fp${bi}${s}').click()">
+              ${blk[s]?`<img src="${blk[s]}">`:'📷'}
+              <input type="file" id="fp${bi}${s}" accept="image/*" onchange="pickPh(${bi},'${s}',this)">
+            </div>
+          </div>`).join('')}
+      </div>`;
+    c.appendChild(d);
+  });
+}
+function addPhoto() {
+  const inp = document.getElementById('new-ph-desc');
+  photos.push({desc: inp.value || `Item ${photos.length+1}`, before:null, progress:null, after:null});
+  inp.value = ''; renderPhotoEd(); renderPhotoPgs();
+}
+function removePhoto(i) { photos.splice(i,1); renderPhotoEd(); renderPhotoPgs(); }
+function pickPh(bi, slot, inp) {
+  if (!inp.files[0]) return;
+  photos[bi][slot] = URL.createObjectURL(inp.files[0]);
+  renderPhotoEd(); renderPhotoPgs();
+}
+
+function renderPhotoPgs() {
+  const c = document.getElementById('photo-pages');
+  c.innerHTML = '';
+  const PER = 3, coName = gv('f-co-name')||'Company', titleEn = gv('f-title-en')||'', contract = gv('f-contract')||'';
+  for (let p = 0; p < Math.ceil(photos.length/PER); p++) {
+    const slice = photos.slice(p*PER,(p+1)*PER);
+    const lbl = document.createElement('div'); lbl.className='pg-lbl'; lbl.textContent=`Photo Page ${p+1}`; c.appendChild(lbl);
+    const pg = document.createElement('div'); pg.className='a4 photo-pg';
+    pg.innerHTML=`
+      <div class="photo-pg-hd"><div><div class="photo-pg-co">${coName}</div><div class="photo-pg-title">${titleEn}</div></div><div class="photo-pg-badge">Site Documentation</div></div>
+      <div class="col-heads"><div class="col-head">Before</div><div class="col-head">Progress</div><div class="col-head">After</div></div>
+      ${slice.map((blk,si)=>`
+        <div class="photo-item">
+          <div class="photo-item-n">${p*PER+si+1}</div>
+          <div><div class="photo-item-d">${blk.desc||''}</div>
+          <div class="photo-cells">${['before','progress','after'].map(s=>`<div class="photo-cell">${blk[s]?`<img src="${blk[s]}">`:`<span class="photo-cell-empty">${s}</span>`}</div>`).join('')}</div></div>
+        </div>`).join('')}
+      <div class="photo-pg-foot">${contract} | ${coName} | Pg ${p+1}</div>`;
+    c.appendChild(pg);
+  }
+}
+
+/* ─── Save / Load ─── */
+function saveDraft() {
+  const ids=['f-co-name','f-co-reg','f-co-a1','f-co-a2','f-co-city','f-co-state','f-co-email','f-co-tel','f-inv-no','f-date','f-contract','f-title-en','f-title-ms','f-cl-name','f-cl-a1','f-cl-a2','f-sign','f-ic'];
+  const data={theme,addrFmt,fields:ids.reduce((o,id)=>{o[id]=gv(id);return o;},{}),items,photoDescs:photos.map(p=>p.desc)};
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download=`Report_${gv('f-inv-no')||'draft'}.json`; a.click();
+}
+function loadDraft(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try {
+      const d=JSON.parse(ev.target.result);
+      if(d.theme){theme=d.theme;document.querySelectorAll('.t-opt').forEach(o=>o.classList.toggle('active',o.dataset.theme===d.theme));}
+      if(d.addrFmt){addrFmt=d.addrFmt;document.querySelectorAll('.a-opt').forEach(o=>o.classList.toggle('active',o.dataset.addr===d.addrFmt));}
+      Object.entries(d.fields||{}).forEach(([id,val])=>sv(id,val));
+      items=d.items||[];
+      photos=(d.photoDescs||[]).map(desc=>({desc,before:null,progress:null,after:null}));
+      renderItems(); renderPhotoEd(); update();
+    } catch(err){alert('Could not load: '+err.message);}
+  };
+  r.readAsText(file);
+}
+</script>
+</body>
+</html>
