@@ -17,13 +17,12 @@ body { font-family: 'Source Sans 3', sans-serif; background: #d1cdc5; font-size:
 
 /* ══════════════ EDITOR ══════════════ */
 #editor {
-  position: fixed; top: 0; left: 0; width: 370px; height: 88vh; max-height: 88vh;
+  position: fixed; top: 0; left: 0; width: 370px; max-width: 92vw; height: 88vh; max-height: 88vh;
   background: var(--panel); color: var(--text);
   display: flex; flex-direction: column; z-index: 1000;
   box-shadow: 0 8px 40px rgba(0,0,0,0.55);
   border-radius: 10px; overflow: hidden;
   transition: box-shadow 0.2s;
-  /* dragging handled by JS */
 }
 #editor.dragging { box-shadow: 0 16px 60px rgba(0,0,0,0.7); opacity: 0.97; }
 #editor.collapsed { height: auto !important; max-height: none; }
@@ -138,11 +137,31 @@ textarea { resize: vertical; min-height: 48px; }
 #bot .btn { flex: 1; }
 
 /* ══════════════ PREVIEW ══════════════ */
-#preview { margin-left: 0; padding: 24px 18px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
-.pg-lbl { font-size: 8.5px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #888; align-self: flex-start; margin-left: calc((100% - 794px)/2); }
+#preview {
+  margin-left: 0; padding: 24px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  width: 100%; overflow-x: hidden;
+}
+.pg-lbl {
+  font-size: 8.5px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: #888; align-self: flex-start; padding-left: 12px; margin-bottom: 6px; margin-top: 14px;
+}
+.pg-lbl:first-child { margin-top: 0; }
 
 /* ══════════════ A4 ══════════════ */
-.a4 { width: 794px; min-height: 1123px; background: #fff; box-shadow: 0 2px 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
+/* Always 794px wide internally (correct for print).
+   JS scales it down to fit the viewport. */
+.a4 {
+  width: 794px; min-height: 1123px;
+  background: #fff; box-shadow: 0 2px 24px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column;
+  transform-origin: top center;
+  transform: scale(var(--pg-scale, 1));
+  /* After scale, the element still occupies 1123px in flow.
+     margin-bottom compensates so pages don't overlap. */
+  margin-bottom: calc((var(--pg-scale, 1) - 1) * 1123px);
+  margin-top: 8px;
+}
 
 /* ══════════════════════════════════════
    HEADER THEMES
@@ -282,9 +301,14 @@ table.tbl td:nth-child(2) { text-align: left; }
   body { background: white; }
   #editor, .pg-lbl, #bot { display: none !important; }
   #preview { margin-left: 0; padding: 0; gap: 0; display: block; }
-  .a4 { width: 210mm; min-height: 297mm; box-shadow: none; page-break-after: always; }
+  .a4 {
+    width: 210mm; min-height: 297mm; box-shadow: none;
+    page-break-after: always;
+    /* reset scale for print — always full size */
+    transform: none !important;
+    margin-bottom: 0 !important;
+  }
   .a4:last-child { page-break-after: avoid; }
-  /* ensure bold header prints with black bg */
   .h-bold { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
@@ -875,6 +899,16 @@ function loadDraft(e){
 </script>
 
 <script>
+/* ── Scale A4 pages to fit viewport ── */
+function rescale() {
+  const padding = 24; // px either side
+  const available = window.innerWidth - padding * 2;
+  const scale = Math.min(1, available / 794);
+  document.documentElement.style.setProperty('--pg-scale', scale);
+}
+rescale();
+window.addEventListener('resize', rescale);
+
 /* ── Draggable panel ── */
 (function(){
   const panel = document.getElementById('editor');
@@ -949,6 +983,7 @@ let widthIdx = 1;
 function cycleWidth(){
   widthIdx = (widthIdx + 1) % widths.length;
   document.getElementById('editor').style.width = widths[widthIdx] + 'px';
+  rescale();
 }
 </script>
 </body>
