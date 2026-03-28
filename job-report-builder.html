@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Job Report Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--p:#111827;--p2:#1f2937;--pb:#374151;--acc:#c8a96e;--txt:#f9fafb;--mu:#9ca3af;--sw:390px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#c8c4bc;font-family:'Source Sans 3',sans-serif;font-size:13px}
+#shell{display:flex;height:100vh;width:100vw}
+#sidebar{width:var(--sw);flex-shrink:0;background:var(--p);color:var(--txt);display:flex;flex-direction:column}
+#sbh{flex-shrink:0;padding:10px 14px 0}
+#sbh-title{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:var(--acc);padding:8px 0 6px}
+#ftab-bar{display:flex;border-bottom:1px solid var(--pb)}
+.ftab{flex:1;padding:7px 4px;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--mu);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'Source Sans 3',sans-serif}
+.ftab:hover{color:var(--txt)}
+.ftab.active{color:var(--acc);border-bottom-color:var(--acc)}
+#sbb{flex:1;overflow:hidden;position:relative}
+.fpanel{position:absolute;inset:0;overflow-y:auto;padding:10px 13px 20px;display:none}
+.fpanel.active{display:block}
+.fpanel::-webkit-scrollbar{width:3px}
+.fpanel::-webkit-scrollbar-thumb{background:var(--pb)}
+#sbf{flex-shrink:0;padding:8px 12px;border-top:1px solid var(--pb);display:flex;gap:6px}
+#pva{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#pvb{flex-shrink:0;background:#151e2e;border-bottom:1px solid #253045;display:flex;align-items:center;justify-content:flex-end;padding:0;min-height:38px}
+#pvtabs{display:flex}
+.pvtab{padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--mu);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;font-family:'Source Sans 3',sans-serif;white-space:nowrap}
+.pvtab:hover{color:var(--txt)}
+.pvtab.active{color:var(--acc);border-bottom-color:var(--acc)}
+#export-wrap{position:relative;flex-shrink:0;padding-right:8px}
+#export-btn{background:var(--acc);color:#1a1200;border:none;padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer}
+#export-btn:hover{filter:brightness(1.1)}
+#export-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#1e2a3a;border:1px solid #2d3f5a;border-radius:6px;min-width:200px;z-index:100;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+#export-menu.open{display:block}
+.emenu-sec{font-size:7.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mu);padding:8px 12px 4px}
+.emenu-btn{display:flex;align-items:center;gap:8px;width:100%;padding:7px 12px;background:none;border:none;color:var(--txt);font-family:'Source Sans 3',sans-serif;font-size:12px;cursor:pointer;text-align:left}
+.emenu-btn:hover{background:#2d3f5a}
+.emenu-btn .ei{font-size:14px;width:20px;text-align:center}
+.emenu-div{border-top:1px solid #2d3f5a;margin:2px 0}
+
+/* Preview area - direct div instead of iframe */
+#preview-area{flex:1;overflow:auto;background:#aaa;padding:10px 0 24px}
+#preview-root{display:flex;flex-direction:column;align-items:center}
+
+/* A4 page styles */
+.a4{width:794px;min-height:1123px;background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.2);display:flex;flex-direction:column;transform-origin:top center;margin-bottom:3px;margin-top:3px;font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#000}
+.abr-hd{padding:120px 110px 0}.abr-co-name{font-size:20pt;font-weight:700;text-align:center;margin-bottom:3px;font-family:Arial,Helvetica,sans-serif}
+.abr-co-addr{font-size:8.5pt;text-align:center;margin-bottom:18px;font-family:Arial,Helvetica,sans-serif}
+.abr-mid{display:flex;justify-content:space-between;align-items:flex-start;padding:0 75px 0 25px}
+.abr-client{font-size:10pt;line-height:1.4;font-family:Arial,Helvetica,sans-serif}
+.meta-tbl{border-collapse:collapse}.ml{font-size:10pt;text-align:left;white-space:nowrap;padding-right:6px;vertical-align:top;font-family:Arial,Helvetica,sans-serif}
+.mv{font-size:10pt;text-align:left;vertical-align:top;min-width:80px;font-family:Arial,Helvetica,sans-serif}
+.wkb-hd{padding:120px 110px 0;font-family:'Times New Roman',Times,serif}.wkb-co-name{font-size:14pt;font-weight:700;text-align:center;margin-bottom:14px;font-family:'Times New Roman',Times,serif}
+.wkb-mid{display:flex;justify-content:space-between;align-items:flex-start;margin:0 -20px}
+.wkb-addr{font-size:10pt;line-height:1.4;font-family:'Times New Roman',Times,serif;font-weight:400}.wkb-inv-block{text-align:right}
+.wkb-inv-word{font-size:32pt;font-weight:700;line-height:1;margin-bottom:6px;font-family:'Times New Roman',Times,serif}
+.wkb-kepada{padding:10px 90px 0;font-family:'Times New Roman',Times,serif;font-weight:400}.kepada-tbl{border-collapse:collapse}
+.kl{font-size:10pt;vertical-align:top;white-space:nowrap;padding-right:6px;font-family:'Times New Roman',Times,serif;font-weight:400}
+.kv{font-size:10pt;line-height:1.4;font-family:'Times New Roman',Times,serif;font-weight:400}
+.title-blk{padding:12px 110px 0}.title-blk.wkb{padding:12px 90px 0;font-family:'Times New Roman',Times,serif}.title-tbl{border-collapse:collapse;width:100%}
+.tl{font-size:10pt;font-weight:700;white-space:nowrap;padding-right:8px;vertical-align:top;font-family:Arial,Helvetica,sans-serif}.title-blk.wkb .tl{font-family:'Times New Roman',Times,serif;font-weight:700}
+.tv{font-size:10pt;font-weight:400;line-height:1.2;font-family:Arial,Helvetica,sans-serif}.title-blk.wkb .tv{font-family:'Times New Roman',Times,serif;font-weight:700}.title-ref{font-size:10pt;font-weight:400;line-height:1.1;margin-top:1px;font-family:Arial,Helvetica,sans-serif}.title-blk.wkb .title-ref{font-family:'Times New Roman',Times,serif;font-weight:400}
+.inv-body{padding:8px 90px 0}.inv-body.wkb{padding:8px 90px 0;font-family:'Times New Roman',Times,serif}
+table.tbl{width:100%;border-collapse:collapse;margin-top:6px;font-family:Arial,Helvetica,sans-serif}.inv-body.wkb table.tbl{font-family:'Times New Roman',Times,serif;font-weight:400}
+table.tbl th{font-size:9.5pt;font-weight:400;padding:5px 6px;text-align:center;border-left:1px solid #000;border-right:1px solid #000;border-top:1.5px solid #000;border-bottom:1.5px solid #000;background:#fff;line-height:1.4;font-family:Arial,Helvetica,sans-serif}.inv-body.wkb table.tbl th{font-family:'Times New Roman',Times,serif;font-weight:700}
+table.tbl th.th-l{text-align:left}
+table.tbl td{font-size:10pt;padding:10px 6px 3px;border-left:1px solid #000;border-right:1px solid #000;border-top:none;border-bottom:none;vertical-align:top;line-height:1.2;font-family:Arial,Helvetica,sans-serif}.inv-body.wkb table.tbl td{font-family:'Times New Roman',Times,serif;font-weight:400}
+table.tbl tr.last-item-row td{border-bottom:1px solid #000;padding-bottom:10px}
+.td-item{text-align:left;width:42px;white-space:nowrap}.td-desc{text-align:left}
+.td-c{text-align:center;width:40px}.td-r{text-align:right;width:62px;white-space:nowrap}
+.td-rate{text-align:center;width:46px;white-space:nowrap}
+.tot-merge{background:#fff;border-left:1px solid #000;border-right:1px solid #000;border-top:none;border-bottom:none}
+.tot-merge-top{border-top:1px solid #000}
+.tot-merge-mid{border-top:none;border-bottom:none}
+.tot-merge-bot{border-bottom:1px solid #000}
+.tot-row td{line-height:1!important;padding-top:0!important;padding-bottom:0!important}
+.tot-lbl{text-align:right;border:1px solid #000!important;padding:0 8px;white-space:nowrap;font-size:10pt;font-weight:400;font-family:Arial,Helvetica,sans-serif}
+.inv-body.wkb .tot-lbl{font-weight:700!important;font-family:'Times New Roman',Times,serif}
+.inv-body.wkb .tot-val{font-weight:700!important;font-family:'Times New Roman',Times,serif}
+.tot-val{border:1px solid #000!important;padding:0 6px!important}
+.tot-lbl-grand,.tot-val-grand{font-weight:700;border-bottom:1px solid #000!important}
+.inv-body.wkb .tot-lbl-grand,.inv-body.wkb .tot-val-grand{font-weight:700!important}
+.tot-row.tot-grand .tot-merge{border-bottom:1px solid #000}
+.sign-blk{padding:20px 90px 80px 90px;margin-top:0}.sign-prep{font-size:10pt;margin-bottom:50px;font-family:Arial,Helvetica,sans-serif}.sign-name{font-size:10pt;font-family:Arial,Helvetica,sans-serif}
+/* ABR photo styles — card layout */
+.ph-pg{padding:36px 48px 24px;background:#fff;font-family:Arial,Helvetica,sans-serif}
+.ph-title{text-align:center;font-size:12pt;font-weight:700;margin-bottom:6px;line-height:1.4;letter-spacing:.5px;text-transform:uppercase}
+.ph-title-divider{border:none;border-top:2px solid #000;margin:0 0 18px}
+.ph-col-hd-row{display:grid;grid-template-columns:44px 1fr 1fr 1fr;gap:10px;margin-bottom:6px;padding:5px 0;border-bottom:1.5px solid #000}
+.ph-col-hd{text-align:center;font-size:8.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#000}
+.ph-col-hd-item{font-size:8.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-align:center}
+.ph-rows{display:flex;flex-direction:column;gap:0}
+.ph-row{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid #ddd}
+.ph-row:last-child{border-bottom:none}
+.ph-row-num{font-size:14pt;font-weight:700;text-align:center;line-height:1;padding-top:4px;color:#000}
+.ph-row-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.ph-slot{display:flex;flex-direction:column;gap:4px}
+.ph-slot-lbl{font-size:7pt;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#666;text-align:center;margin-bottom:2px}
+.ph-img-wrap{width:100%;overflow:hidden;border-radius:2px}.ph-img{width:100%;height:auto;display:block}
+/* OLE — One-Lin Enterprise styles */
+.ole-hd{padding:100px 110px 0;font-family:Arial,Helvetica,sans-serif}
+.ole-co-name{font-size:22pt;font-weight:700;text-align:center;margin-bottom:4px;font-family:Arial,Helvetica,sans-serif}
+.ole-co-addr{font-size:9pt;text-align:center;margin-bottom:20px;font-family:Arial,Helvetica,sans-serif}
+.ole-mid{display:flex;justify-content:space-between;align-items:flex-start;padding:0 10px 0 25px}
+.ole-client{font-size:10pt;line-height:1.4;font-family:Arial,Helvetica,sans-serif}
+.ole-inv-block{text-align:right}
+.ole-inv-word{font-size:26pt;font-weight:700;font-family:Arial,Helvetica,sans-serif;line-height:1;margin-bottom:8px}
+.ole-inv-meta{font-size:10pt;font-family:Arial,Helvetica,sans-serif;line-height:1.6}
+.ole-title-blk{padding:14px 90px 0;font-family:Arial,Helvetica,sans-serif}
+.ole-title-row{display:flex;gap:6px;font-size:10pt;font-family:Arial,Helvetica,sans-serif;line-height:1.35}
+.ole-title-lbl{font-weight:400;white-space:nowrap}
+.ole-title-val{font-weight:400;line-height:1.35}
+.ole-inv-body{padding:8px 90px 0}
+table.ole-tbl{width:100%;border-collapse:collapse;margin-top:6px;font-family:Arial,Helvetica,sans-serif}
+table.ole-tbl th{font-size:9.5pt;font-weight:700;padding:5px 6px;text-align:center;border-left:1px solid #000;border-right:1px solid #000;border-top:1.5px solid #000;border-bottom:1.5px solid #000;background:#fff;line-height:1.4;font-family:Arial,Helvetica,sans-serif}
+table.ole-tbl th.ole-th-l{text-align:left}
+table.ole-tbl td{font-size:10pt;padding:10px 6px 3px;border-left:1px solid #000;border-right:1px solid #000;border-top:none;border-bottom:none;vertical-align:top;line-height:1.2;font-family:Arial,Helvetica,sans-serif}
+table.ole-tbl tr.last-item-row td{border-bottom:1px solid #000;padding-bottom:10px}
+.ole-td-item{text-align:center;width:44px}.ole-td-desc{text-align:left}
+.ole-td-c{text-align:center;width:42px}.ole-td-r{text-align:right;width:62px;white-space:nowrap}
+.ole-td-rate{text-align:center;width:62px;white-space:nowrap}
+.ole-tot-lbl{text-align:right;border:1px solid #000!important;padding:0 8px;font-size:10pt;font-weight:400!important;font-family:Arial,Helvetica,sans-serif;line-height:1}
+.ole-tot-val{border:1px solid #000!important;padding:0 6px;font-size:10pt;text-align:right;white-space:nowrap;font-weight:400!important;font-family:Arial,Helvetica,sans-serif;line-height:1}
+.ole-tot-grand .ole-tot-lbl,.ole-tot-grand .ole-tot-val{font-weight:400!important}
+table.ole-tbl tr.ole-tot-row td{padding:0!important;line-height:1!important;height:auto!important}
+.ole-sign-blk{padding:20px 90px 0 130px;font-family:Arial,Helvetica,sans-serif;margin-top:0}
+.ole-sign-prep{font-size:10pt;margin-bottom:50px;font-family:Arial,Helvetica,sans-serif}.ole-sign-name{font-size:10pt;font-family:Arial,Helvetica,sans-serif}
+/* WKB payment block */
+.wkb-pay-blk{padding:14px 90px 0;font-family:'Times New Roman',Times,serif}
+.wkb-pay-center{text-align:center;font-size:10pt;font-weight:400;margin-bottom:6px;font-family:'Times New Roman',Times,serif;line-height:1}
+.wkb-pay-detail{font-size:10pt;font-weight:400;line-height:1;font-family:'Times New Roman',Times,serif;padding-left:0}
+.wkb-sign-blk{padding:24px 90px 80px 90px;font-family:'Times New Roman',Times,serif;margin-top:0}
+.wkb-sign-prep{font-size:10pt;font-weight:400;margin-bottom:48px;font-family:'Times New Roman',Times,serif}
+.wkb-sign-dots{font-size:10pt;font-weight:400;margin-bottom:2px;font-family:'Times New Roman',Times,serif}
+.wkb-sign-name{font-size:10pt;font-weight:400;font-family:'Times New Roman',Times,serif}
+.ph-pg-ole{padding:36px 52px 24px;font-family:Arial,Helvetica,sans-serif}
+.ph-title-ole{font-size:12pt;font-weight:700;text-align:center;margin-bottom:14px;font-family:Arial,Helvetica,sans-serif;line-height:1.4}
+.ph-ole-rows{display:flex;flex-direction:column;gap:20px}
+.ph-ole-row{display:flex;flex-direction:column;gap:6px}
+.ph-ole-row-hd{display:flex;align-items:center;gap:8px;border-bottom:1px solid #000;padding-bottom:4px;margin-bottom:8px}
+.ph-ole-row-num{font-size:11pt;font-weight:700;font-family:Arial,Helvetica,sans-serif;min-width:28px}
+.ph-ole-row-desc{font-size:10pt;font-family:Arial,Helvetica,sans-serif;color:#333}
+.ph-ole-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.ph-ole-slot{display:flex;flex-direction:column;gap:3px}
+.ph-ole-slot-lbl{font-size:8pt;font-weight:700;font-family:Arial,Helvetica,sans-serif;letter-spacing:.5px;padding:3px 6px;background:#000;color:#fff;text-align:center}
+.ph-ole-imgs{display:flex;flex-direction:column;gap:4px}
+.ph-ole-img{width:100%;height:auto;display:block}
+.ph-title-wkb{text-align:center;font-size:13pt;font-weight:700;margin-bottom:16px;line-height:1.4;font-family:'Times New Roman',Times,serif}
+.ph-tbl-wrap{padding:0 36px}
+.ph-tbl{width:100%;border-collapse:collapse}
+.ph-tbl th{font-size:10pt;font-weight:700;padding:6px 8px;border:1px solid #000;text-align:center;font-family:'Times New Roman',Times,serif;background:#f5f5f5}
+.ph-tbl th.ph-th-l{text-align:center;width:50px}
+.ph-tbl td{border:1px solid #000;padding:6px 8px;vertical-align:top;font-family:'Times New Roman',Times,serif;font-size:10pt}
+.ph-tbl td.ph-td-num{text-align:center;font-weight:700;vertical-align:middle;font-size:11pt;width:50px}
+.ph-tbl td.ph-td-img{padding:4px;width:33%}
+.ph-tbl img{width:100%;height:auto;display:block}
+.ltr-pg{padding:120px 100px 36px;font-size:11.5pt;color:#000;font-family:'Times New Roman',Times,serif}
+.ltr-co-name{font-size:22pt;font-weight:700;text-align:center;margin-bottom:4px}
+.ltr-co-addr{font-size:10pt;text-align:center;margin-bottom:0}
+.ltr-space-top{height:28px}.ltr-tarikh{margin-bottom:14px}
+.ltr-client-block{font-size:11.5pt;line-height:1.35;margin-bottom:14px}
+.ltr-tuan{font-size:11.5pt;margin-bottom:12px}
+.ltr-kontrak{font-size:11.5pt;font-weight:700;text-transform:uppercase;margin-bottom:6px}
+.ltr-projek-row{display:flex;gap:10px;margin-bottom:6px;font-size:11.5pt}
+.ltr-projek-lbl{font-weight:700;white-space:nowrap;text-transform:uppercase}
+.ltr-projek-val{line-height:1.5}
+.ltr-sebut{font-size:11.5pt;font-weight:700;text-transform:uppercase;margin-bottom:12px}
+.ltr-perkara{font-size:11.5pt;font-weight:700;text-transform:uppercase;margin-bottom:14px;line-height:1.5}
+.ltr-body{font-size:11.5pt;line-height:1.2;white-space:pre-wrap}
+.ltr-yang{font-size:11.5pt;margin-top:20px}.ltr-sign-gap{height:52px}
+.ltr-dots{font-size:11.5pt;margin-bottom:2px}.ltr-sname{font-size:11.5pt}
+
+/* Sidebar form styles */
+.sec{font-size:7.5px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--acc);border-bottom:1px solid var(--pb);padding-bottom:3px;margin:13px 0 7px}
+.sec:first-child{margin-top:0}
+label{display:block;font-size:9.5px;color:var(--mu);margin:6px 0 2px}
+input[type=text],input[type=date],textarea,select{width:100%;background:var(--p2);border:1px solid var(--pb);border-radius:4px;color:var(--txt);font-family:'Source Sans 3',sans-serif;font-size:12px;padding:5px 8px;outline:none;transition:border-color .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--acc)}
+textarea{resize:vertical;min-height:44px}
+select option{background:var(--p2)}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.co-opts{display:flex;gap:8px;margin-top:5px}
+.co-opt{flex:1;border:2px solid var(--pb);border-radius:6px;padding:9px 8px;cursor:pointer;background:var(--p2);text-align:center;user-select:none;transition:border-color .15s}
+.co-opt:hover{border-color:#666}
+.co-opt.active{border-color:var(--acc)}
+.co-nm{font-size:11px;font-weight:700;color:var(--txt);line-height:1.3}
+.co-sb{font-size:8px;color:var(--mu);margin-top:3px}
+#items-wrap{display:flex;flex-direction:column;gap:5px}
+.irow{background:var(--p2);border:1px solid var(--pb);border-radius:4px;padding:7px 9px}
+.irow-hd{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.irow-n{font-size:8px;color:var(--acc);font-weight:700;letter-spacing:1px;white-space:nowrap}
+.irow-num-inp{width:50px!important;font-size:11px;padding:3px 5px;flex-shrink:0}
+.irow label{margin:0 0 1px;font-size:8px}
+.irow input,.irow textarea{font-size:11px;padding:3px 5px}
+.irow textarea{min-height:32px}
+.irow-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px;margin-top:3px}
+.rm{margin-left:auto;background:none;border:none;color:#4b5563;cursor:pointer;font-size:13px;padding:2px 3px;flex-shrink:0}
+.rm:hover{color:#ef4444}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:6px 11px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'Source Sans 3',sans-serif}
+.btn-ghost{background:transparent;border:1px solid var(--pb);color:var(--mu);width:100%;margin-top:4px}
+.btn-ghost:hover{border-color:var(--acc);color:var(--acc)}
+.btn-save{background:#1e3a2f;color:#6ee7b7;border:1px solid #2d5a45;flex:1}
+.btn-save:hover{background:#2d5a45}
+.btn-load{background:#1e2a3a;color:#93c5fd;border:1px solid #2d3f5a;flex:1}
+.btn-load:hover{background:#2d3f5a}
+.pblk{background:var(--p2);border:1px solid var(--pb);border-radius:4px;padding:7px 9px;margin-bottom:5px}
+.pblk-hd{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--acc);font-weight:700;margin-bottom:5px}
+.pblk-hd button{background:none;border:none;color:#4b5563;cursor:pointer;font-size:13px;margin-left:auto}
+.pblk-hd button:hover{color:#ef4444}
+.pblk-num{width:44px!important;font-size:11px;padding:2px 4px;flex-shrink:0}
+.pslots{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:5px}
+.pslot-hd{font-size:7.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);text-align:center;margin-bottom:3px}
+.pslot-imgs{display:flex;flex-direction:column;gap:3px}
+.pthumb{position:relative;background:#0f172a;border-radius:2px;overflow:hidden}
+.pthumb img{width:100%;height:auto;display:block}
+.pthumb-rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);border:none;color:#fff;font-size:9px;cursor:pointer;border-radius:2px;padding:1px 4px;line-height:1}
+.padd-btn{display:block;text-align:center;font-size:9px;color:var(--acc);cursor:pointer;border:1px dashed #374151;border-radius:3px;padding:4px 2px;margin-top:3px}
+.padd-btn:hover{border-color:var(--acc)}
+.add-ph-row{display:flex;gap:5px;margin-top:5px;align-items:flex-end}
+.add-ph-num{width:50px!important;flex-shrink:0}
+.letter-hint{font-size:9px;color:var(--mu);margin-bottom:6px;line-height:1.5}
+textarea.ltr-ta{min-height:160px;font-size:12px;font-family:'Source Sans 3',sans-serif;line-height:1.6}
+
+@media print{
+  #shell{display:block}
+  #sidebar{display:none!important}
+  #pva{display:block}
+  #pvb{display:none!important}
+  #preview-area{overflow:visible;background:#fff;padding:0}
+  #preview-root{align-items:flex-start}
+  .a4{width:210mm;min-height:297mm;box-shadow:none;page-break-after:always;margin:0!important}
+  .a4:last-child{page-break-after:avoid}
+  .a4-hidden{display:none!important}
+  @page{size:A4;margin:0}
+}
+</style>
+</head>
+<body>
+<div id="shell">
+<div id="sidebar">
+  <div id="sbh">
+    <div id="sbh-title">Job Report Builder</div>
+    <div id="ftab-bar">
+      <button class="ftab active" id="ftab-invoice" onclick="switchTab('invoice')">Invoice &amp; Items</button>
+      <button class="ftab" id="ftab-photos" onclick="switchTab('photos')">Photos</button>
+      <button class="ftab" id="ftab-wages" onclick="switchTab('wages')">Wages Letter</button>
+      <button class="ftab" id="ftab-sst" onclick="switchTab('sst')">SST Letter</button>
+    </div>
+  </div>
+  <div id="sbb">
+    <div class="fpanel active" id="fpanel-invoice">
+      <div class="sec">Company</div>
+      <div class="co-opts">
+        <div class="co-opt active" data-co="abr" onclick="setCo('abr',this)"><div class="co-nm">ABR Services</div><div class="co-sb">Tanjung Aru, KK</div></div>
+        <div class="co-opt" data-co="wkb" onclick="setCo('wkb',this)"><div class="co-nm">Warisan Kencana Borneo</div><div class="co-sb">(155994T) · Metro Town</div></div>
+        <div class="co-opt" data-co="ole" onclick="setCo('ole',this)"><div class="co-nm">One-Lin Enterprise</div><div class="co-sb">Plaza Tanjung Aru, KK</div></div>
+      </div>
+      <input type="hidden" id="f-company" value="abr">
+      <div class="sec">Invoice Details</div>
+      <div class="r2">
+        <div><label>Invoice No.</label><input type="text" id="f-inv-no" oninput="push()"></div>
+        <div><label>Date</label><input type="date" id="f-date" oninput="push()"></div>
+      </div>
+      <label>Contract / Reference No.</label><input type="text" id="f-contract" oninput="push()">
+      <label>Project Title</label><textarea id="f-title-en" rows="3" oninput="push()"></textarea>
+      <label>Contract Ref Line</label><input type="text" id="f-title-ref" oninput="push()">
+      <div class="sec">Client</div>
+      <label>Name / Department</label><input type="text" id="f-cl-name" oninput="push()">
+      <label>Address Line 1</label><input type="text" id="f-cl-a1" oninput="push()">
+      <label>Address Line 2</label><input type="text" id="f-cl-a2" oninput="push()">
+      <label>Address Line 3</label><input type="text" id="f-cl-a3" oninput="push()">
+      <div class="sec">Tax &amp; Signatory</div>
+      <div class="r2">
+        <div><label>SST Rate</label>
+          <select id="c-sst-rate" onchange="push()">
+            <option value="exempt">Exempt (—)</option>
+            <option value="6">6%</option>
+            <option value="8">8%</option>
+          </select>
+        </div>
+        <div><label>Grand Total (letters)</label><input type="text" id="f-grand-amount" placeholder="e.g. RM7,180.00" oninput="push()"></div>
+      </div>
+      <div class="r2" style="margin-top:6px">
+        <div><label>Prepared By</label><input type="text" id="f-sign" oninput="push()"></div>
+        <div><label>IC No.</label><input type="text" id="f-ic" oninput="push()"></div>
+      </div>
+      <div class="sec">WKB Payment Info</div>
+      <label>Bank Name</label><input type="text" id="f-wkb-bank" placeholder="e.g. STANDARD CHARTERED" oninput="push()">
+      <label>Account Name</label><input type="text" id="f-wkb-accname" placeholder="e.g. WARISAN KENCANA BORNEO" oninput="push()">
+      <label>Account No.</label><input type="text" id="f-wkb-accno" placeholder="e.g. 3 9 0 1 9 4 7 0 4 1 7 1" oninput="push()">
+      <div class="sec">Invoice Line Items</div>
+      <div id="items-wrap"></div>
+      <button class="btn btn-ghost" onclick="addItem()">+ Add Item</button>
+    </div>
+
+    <div class="fpanel" id="fpanel-photos">
+      <div class="sec">Site Photos</div>
+      <p style="font-size:9px;color:var(--mu);margin-bottom:5px;line-height:1.5">Each row = one invoice item. Add multiple photos per slot.</p>
+      <label>Photo Page Title</label>
+      <input type="text" id="f-photo-title" placeholder="Leave blank to use Project Title" oninput="push()">
+      <div style="margin-top:8px" id="photo-ed"></div>
+      <div class="add-ph-row">
+        <div><label style="margin:0 0 2px">Item #</label><input type="text" class="add-ph-num" id="new-ph-num" placeholder="e.g. 2"></div>
+        <button class="btn btn-ghost" style="margin:0;flex:1;align-self:flex-end" onclick="addPhoto()">+ Add Photo Row</button>
+      </div>
+    </div>
+
+    <div class="fpanel" id="fpanel-wages">
+      <div class="sec">No Outstanding Wages Letter</div>
+      <p class="letter-hint">Edit heading and body freely. Line breaks preserved.</p>
+      <label>Kontrak No.</label><input type="text" id="f-wages-kontrak" oninput="push()">
+      <label>Projek</label><textarea rows="2" id="f-wages-projek" oninput="push()"></textarea>
+      <label>Sebutharga</label><input type="text" id="f-wages-sebut" placeholder="e.g. RM7,180.00" oninput="push()">
+      <label>Heading (PERKARA line)</label><input type="text" id="f-wages-title" oninput="push()">
+      <label>Body Text</label><textarea class="ltr-ta" id="f-wages-body" rows="12" oninput="push()"></textarea>
+    </div>
+
+    <div class="fpanel" id="fpanel-sst">
+      <div class="sec">SST Declaration Letter</div>
+      <p class="letter-hint">Edit heading and body freely.</p>
+      <label>Kontrak No.</label><input type="text" id="f-sst-kontrak" oninput="push()">
+      <label>Projek</label><textarea rows="2" id="f-sst-projek" oninput="push()"></textarea>
+      <label>Sebutharga</label><input type="text" id="f-sst-sebut" placeholder="e.g. RM7,180.00" oninput="push()">
+      <label>Heading (PER line)</label><input type="text" id="f-sst-title" oninput="push()">
+      <label>Body Text</label><textarea class="ltr-ta" id="f-sst-body" rows="14" oninput="push()"></textarea>
+    </div>
+  </div>
+  <div id="sbf">
+    <button class="btn btn-save" onclick="saveDraft()">💾 Save</button>
+    <label style="margin:0;flex:1;cursor:pointer;display:flex">
+      <span class="btn btn-load" style="width:100%">📂 Load</span>
+      <input type="file" accept=".json" style="display:none" onchange="loadDraft(event)">
+    </label>
+  </div>
+</div>
+
+<div id="pva">
+  <div id="pvb">
+    <div id="export-wrap">
+      <button id="export-btn" onclick="document.getElementById('export-menu').classList.toggle('open')">🖨 Export ▾</button>
+      <div id="export-menu">
+        <div class="emenu-sec">Print Single</div>
+        <button class="emenu-btn" onclick="printOne('invoice')"><span class="ei">📄</span>Invoice</button>
+        <button class="emenu-btn" onclick="printOne('photos')"><span class="ei">📷</span>Photos</button>
+        <button class="emenu-btn" onclick="printOne('wages')"><span class="ei">✉️</span>Wages Letter</button>
+        <button class="emenu-btn" onclick="printOne('sst')"><span class="ei">✉️</span>SST Letter</button>
+        <div class="emenu-div"></div>
+        <div class="emenu-sec">Print Multiple</div>
+        <button class="emenu-btn" onclick="printBoth()"><span class="ei">📬</span>Both Letters</button>
+        <button class="emenu-btn" onclick="printOne('all')"><span class="ei">📦</span>All Pages (merged PDF)</button>
+      </div>
+    </div>
+  </div>
+  <div id="preview-area">
+    <div id="preview-root"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+var currentPage = 'invoice';
+var items = [];
+var photos = [];
+
+// ═══════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════
+function sv(id,v){var e=document.getElementById(id);if(e)e.value=v;}
+function gv(id){var e=document.getElementById(id);if(!e)return'';if(e.tagName==='SELECT')return e.value;return(e.value||'').trim();}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+function escHTML(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function switchTab(tab){
+  currentPage=tab;
+  document.querySelectorAll('.ftab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.fpanel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('ftab-'+tab).classList.add('active');
+  document.getElementById('fpanel-'+tab).classList.add('active');
+  push();
+}
+
+function switchPv(page){switchTab(page);}
+
+function setCo(val,el){
+  document.getElementById('f-company').value=val;
+  document.querySelectorAll('.co-opt').forEach(function(o){o.classList.remove('active');});
+  el.classList.add('active');
+  // Swap letter defaults to match chosen company
+  if(val==='wkb'){
+    sv('f-wages-title','PERKARA: PENGESAHAN TIADA GAJI YANG TERTUNGGAK');
+    sv('f-wages-body','Dengan segala hormatnya perkara di atas adalah dirujuk.\n\n2.  Untuk makluman pihak Tuan, \u201cTiada gaji yang tertunggak kepada pekerja-pekerja melainkan Dimana sijil ini disediakan\u201d.\n\n3.  Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai.\n\nSekian, terima kasih.');
+    sv('f-sst-title','PER: PENGESAHAN TIDAK BERDAFTAR SALES AND SERVICE TAX (SST) SYARIKAT');
+    sv('f-sst-body','Dengan segala hormatnya perkara di atas adalah dirujuk.\n\n2.  Bahawasanya kami Warisan Kencana Borneo (155994T) mengesahkan bahawa syarikat kami tidak berdaftar untuk SALES AND SERVICE TAX (SST) di Jabatan Kastam Diraja Malaysia.\n\n3.  Disebabkan syarikat kami tidak mempunyai nilai Perkhidmatan Bercukai RM500,000.00 yang ditetapkan dalam tempoh 12 bulan. Oleh itu, pihak syarikat tidak akan menuntut sebarang cukai SST daripada pihak Jabatan untuk sebarang tuntutan bayaran syarikat kami.\n\n4.  Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai. Sebarang perubahan akan dimaklumkan kelak.\n\nSekian, terima kasih.');
+  } else if(val==='ole'){
+    sv('f-wages-title','PERKARA: PENGESAHAN TIADA GAJI YANG TERTUNGGAK');
+    sv('f-wages-body','Dengan segala hormatnya perkara di atas adalah dirujuk.\n\n2.  Untuk makluman pihak Tuan, \u201cTiada gaji yang tertunggak kepada pekerja-pekerja melainkan Dimana sijil ini disediakan\u201d.\n\n3.  Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai.\n\nSekian, terima kasih.');
+    sv('f-sst-title','PER: PENGESAHAN TIDAK BERDAFTAR SALES AND SERVICE TAX (SST) SYARIKAT');
+    sv('f-sst-body','Dengan segala hormatnya perkara di atas adalah dirujuk.\n\n2.  Bahawasanya kami One-Lin Enterprise mengesahkan bahawa syarikat kami tidak berdaftar untuk SALES AND SERVICE TAX (SST) di Jabatan Kastam Diraja Malaysia.\n\n3.  Disebabkan syarikat kami tidak mempunyai nilai Perkhidmatan Bercukai RM500,000.00 yang ditetapkan dalam tempoh 12 bulan. Oleh itu, pihak syarikat tidak akan menuntut sebarang cukai SST daripada pihak Jabatan untuk sebarang tuntutan bayaran syarikat kami.\n\n4.  Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai. Sebarang perubahan akan dimaklumkan kelak.\n\nSekian, terima kasih.');
+  } else {
+    sv('f-wages-title','PERKARA: PENGESAHAN TIADA GAJI YANG TERTUNGGAK');
+    sv('f-wages-body','Dengan segala hormatnya perkara di atas adalah dirujuk.\n\n2.  Untuk makluman pihak Tuan, \u201cTiada gaji yang tertunggak kepada pekerja-pekerja melainkan Dimana sijil ini disediakan\u201d.\n\n3.  Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai.\n\nSekian, terima kasih.');
+    sv('f-sst-title','PER: PENGESAHAN TIDAK BERDAFTAR SALES AND SERVICE TAX (SST) SYARIKAT');
+    sv('f-sst-body','Dengan segala hormatnya perkara di atas adalah dirujuk.\n\n2.  Bahawasanya saya Asram Bin Rasmun (NO IC: 830601-12-5195) pemilik Syarikat ABR Services mengesahkan bahawa syarikat kami tidak berdaftar untuk SALES AND SERVICE TAX (SST) di Jabatan Kastam Diraja Malaysia.\n\n3.  Disebabkan syarikat kami tidak mempunyai nilai Perkhidmatan Bercukai RM500,000.00 yang ditetapkan dalam tempoh 12 bulan. Oleh itu, pihak syarikat tidak akan menuntut sebarang cukai SST daripada pihak Jabatan untuk sebarang tuntutan bayaran syarikat kami.\n\n4.  Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai. Sebarang perubahan akan dimaklumkan kelak.\n\nSekian, terima kasih.');
+  }
+  push();
+}
+
+document.addEventListener('click',function(e){
+  var ew=document.getElementById('export-wrap');
+  if(ew&&!ew.contains(e.target)) document.getElementById('export-menu').classList.remove('open');
+});
+
+function push(){
+  var root=document.getElementById('preview-root');
+  if(root) root.innerHTML=buildPageHTML(currentPage);
+  rescale();
+}
+
+function rescale(){
+  var area=document.getElementById('preview-area');
+  if(!area)return;
+  var availW=area.clientWidth-24;
+  var s=Math.min(1,availW/794);
+  document.querySelectorAll('.a4').forEach(function(el){
+    el.style.transform='scale('+s+')';
+    el.style.transformOrigin='top center';
+    el.style.marginBottom=((s-1)*1123)+'px';
+  });
+}
+
+window.addEventListener('resize',rescale);
+
+// ═══════════════════════════════════════════════════════
+// PRINT — temporarily show only target pages
+// ═══════════════════════════════════════════════════════
+function printOne(page){
+  document.getElementById('export-menu').classList.remove('open');
+  // Render target page
+  var root=document.getElementById('preview-root');
+  root.innerHTML=buildPageHTML(page);
+  rescale();
+  setTimeout(function(){
+    window.print();
+    // Restore current preview after print dialog
+    setTimeout(function(){push();},600);
+  },350);
+}
+
+function printBoth(){
+  document.getElementById('export-menu').classList.remove('open');
+  var root=document.getElementById('preview-root');
+  root.innerHTML=buildPageHTML('wages')+buildPageHTML('sst');
+  rescale();
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){push();},600);
+  },350);
+}
+
+// ═══════════════════════════════════════════════════════
+// ITEMS
+// ═══════════════════════════════════════════════════════
+function renderItems(){
+  var c=document.getElementById('items-wrap');
+  c.innerHTML='';
+  items.forEach(function(item,i){
+    var d=document.createElement('div');
+    d.className='irow';
+    d.innerHTML='<div class="irow-hd"><span class="irow-n">ITEM</span>'+
+      '<input type="text" class="irow-num-inp" value="'+esc(item.num)+'" placeholder="#" oninput="items['+i+'].num=this.value;push()">'+
+      '<button class="rm" onclick="removeItem('+i+')">✕</button></div>'+
+      '<label>Description</label>'+
+      '<textarea rows="2" oninput="items['+i+'].desc=this.value;push()">'+esc(item.desc)+'</textarea>'+
+      '<div class="irow-grid">'+
+      '<div><label>Qty</label><input type="text" value="'+esc(item.qty)+'" oninput="items['+i+'].qty=this.value;push()"></div>'+
+      '<div><label>Unit</label><input type="text" value="'+esc(item.unit)+'" oninput="items['+i+'].unit=this.value;push()"></div>'+
+      '<div><label>Rate</label><input type="text" value="'+esc(item.rate)+'" oninput="items['+i+'].rate=this.value;push()"></div>'+
+      '<div><label>Amount</label><input type="text" value="'+esc(item.amount)+'" placeholder="auto" oninput="items['+i+'].amount=this.value;push()"></div>'+
+      '</div>';
+    c.appendChild(d);
+  });
+}
+function addItem(){items.push({num:String(items.length+1),desc:'',qty:'',unit:'NOS',rate:'',amount:''});renderItems();push();}
+function removeItem(i){items.splice(i,1);renderItems();push();}
+
+// ═══════════════════════════════════════════════════════
+// PHOTOS
+// ═══════════════════════════════════════════════════════
+function renderPhotoEd(){
+  var c=document.getElementById('photo-ed');
+  c.innerHTML='';
+  photos.forEach(function(blk,bi){
+    var d=document.createElement('div');
+    d.className='pblk';
+    var slots=['before','progress','after'].map(function(s){
+      var imgs=(blk[s]||[]).map(function(src,pi){
+        return '<div class="pthumb"><img src="'+src+'"><button class="pthumb-rm" onclick="removePhotoImg('+bi+',\''+s+'\','+pi+')">✕</button></div>';
+      }).join('');
+      return '<div class="pslot"><div class="pslot-hd">'+s.toUpperCase()+'</div>'+
+        '<div class="pslot-imgs">'+imgs+'</div>'+
+        '<label class="padd-btn">+ Add<input type="file" accept="image/*" multiple style="display:none" onchange="addPhotoImgs('+bi+',\''+s+'\',this)"></label></div>';
+    }).join('');
+    d.innerHTML='<div class="pblk-hd"><span>Row '+(bi+1)+' — Item</span>'+
+      '<input type="text" class="pblk-num" value="'+esc(blk.invoiceNum)+'" placeholder="No." oninput="photos['+bi+'].invoiceNum=this.value;push()">'+
+      '<button onclick="removePhoto('+bi+')">✕</button></div>'+
+      '<label>Description (optional)</label>'+
+      '<input type="text" value="'+esc(blk.desc)+'" placeholder="e.g. Door lock set" oninput="photos['+bi+'].desc=this.value;push()">'+
+      '<div class="pslots">'+slots+'</div>';
+    c.appendChild(d);
+  });
+}
+function addPhoto(){
+  var inp=document.getElementById('new-ph-num');
+  photos.push({invoiceNum:inp.value.trim(),desc:'',before:[],progress:[],after:[]});
+  inp.value='';renderPhotoEd();push();
+}
+function removePhoto(i){photos.splice(i,1);renderPhotoEd();push();}
+function removePhotoImg(bi,slot,pi){photos[bi][slot].splice(pi,1);renderPhotoEd();push();}
+function addPhotoImgs(bi,slot,inp){
+  var files=Array.from(inp.files);var loaded=0;
+  files.forEach(function(f){
+    var r=new FileReader();
+    r.onload=function(e){photos[bi][slot].push(e.target.result);loaded++;if(loaded===files.length){renderPhotoEd();push();}};
+    r.readAsDataURL(f);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════════════════════
+var DRAFT_IDS=['f-company','f-inv-no','f-date','f-contract','f-title-en','f-title-ref',
+  'f-cl-name','f-cl-a1','f-cl-a2','f-cl-a3','f-sign','f-ic','f-grand-amount','c-sst-rate',
+  'f-wkb-bank','f-wkb-accname','f-wkb-accno',
+  'f-wages-kontrak','f-wages-projek','f-wages-sebut','f-wages-title','f-wages-body',
+  'f-sst-kontrak','f-sst-projek','f-sst-sebut','f-sst-title','f-sst-body','f-photo-title'];
+
+function saveDraft(){
+  var data={fields:DRAFT_IDS.reduce(function(o,id){o[id]=gv(id);return o;},{}),items:items,
+    photos:photos.map(function(p){return{invoiceNum:p.invoiceNum,desc:p.desc,before:p.before.slice(),progress:p.progress.slice(),after:p.after.slice()};})};
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download='Report_'+(gv('f-inv-no')||'draft')+'.json';a.click();
+}
+function loadDraft(e){
+  var file=e.target.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(ev){
+    try{
+      var d=JSON.parse(ev.target.result);
+      Object.keys(d.fields||{}).forEach(function(id){sv(id,d.fields[id]);});
+      items=d.items||[];
+      photos=(d.photos||[]).map(function(p){return{invoiceNum:p.invoiceNum||'',desc:p.desc||'',before:p.before||[],progress:p.progress||[],after:p.after||[]};});
+      var co=gv('f-company');
+      document.querySelectorAll('.co-opt').forEach(function(o){o.classList.toggle('active',o.dataset.co===co);});
+      renderItems();renderPhotoEd();push();
+    }catch(err){alert('Could not load: '+err.message);}
+  };
+  r.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════
+// BUILD PAGE HTML (returns innerHTML string for preview-root)
+// ═══════════════════════════════════════════════════════
+function buildPageHTML(page){
+  var company=gv('f-company');
+  var invNo=gv('f-inv-no');
+  var invDate=gv('f-date');
+  var contract=gv('f-contract');
+  var titleEn=gv('f-title-en');
+  var titleRef=gv('f-title-ref');
+  var photoTitle=gv('f-photo-title');
+  var clName=gv('f-cl-name');
+  var clA1=gv('f-cl-a1');
+  var clA2=gv('f-cl-a2');
+  var clA3=gv('f-cl-a3');
+  var signName=gv('f-sign')||'Asram Bin Rasmun';
+  var sstRate=gv('c-sst-rate');
+  var grandAmt=gv('f-grand-amount');
+  var wagesTitle=gv('f-wages-title');
+  var wagesBody=gv('f-wages-body');
+  var sstTitle=gv('f-sst-title');
+  var sstBody=gv('f-sst-body');
+
+  var coWKB={name:'WARISAN KENCANA BORNEO',reg:'(155994T)',
+    a1:'Unit 3, Tingkat 1, Blok D,',a2:'Metro Town, Kota Kinabalu,',a3:'Sabah, Malaysia',
+    email:'warisankencanaborneo@gmail.com',tel:'088- 728 996'};
+  var coABR={name:'ABR Services',
+    addr:'Lot\u00a0 F-2-10, 2<sup>nd</sup> Floor, Block F, Plaza Tanjung Aru, Jalan Mat Salleh, 88100 KK, Sabah.'};
+  var coOLE={name:'One-Lin Enterprise',
+    addr:'B-4-2, 4th Floor, Block B, Plaza Tanjung Aru, 88858 Kota Kinabalu, Sabah'};
+  var co=company==='wkb'?coWKB:(company==='ole'?coOLE:coABR);
+
+  function fmtDate(v){
+    if(!v)return'';
+    try{return new Date(v+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});}
+    catch(e){return v;}
+  }
+  var dateStr=fmtDate(invDate);
+  var clientLines=[clName,clA1,clA2,clA3].filter(Boolean);
+
+  // HEADERS
+  var headerABR='<div class="abr-hd">'+
+    '<div class="abr-co-name">ABR Services</div>'+
+    '<div class="abr-co-addr">'+co.addr+'</div>'+
+    '<div class="abr-mid">'+
+      '<div class="abr-client">'+clientLines.map(function(l){return'<div>'+escHTML(l)+'</div>';}).join('')+'</div>'+
+      '<table class="meta-tbl">'+
+        '<tr><td class="ml">Invoice:</td><td class="mv">'+escHTML(invNo)+'</td></tr>'+
+        '<tr><td class="ml">Date:</td><td class="mv">'+escHTML(dateStr)+'</td></tr>'+
+      '</table>'+
+    '</div></div>';
+
+  var headerWKB='<div class="wkb-hd">'+
+    '<div class="wkb-co-name">'+co.name+' '+co.reg+'</div>'+
+    '<div class="wkb-mid">'+
+      '<div class="wkb-addr"><div>'+co.a1+'</div><div>'+co.a2+'</div><div>'+co.a3+'</div><div>Email: '+co.email+'</div><div>Tel: '+co.tel+'</div></div>'+
+      '<div class="wkb-inv-block">'+
+        '<div class="wkb-inv-word">INVOICE</div>'+
+        '<table class="meta-tbl">'+
+          '<tr><td class="ml">Invoice No. :</td><td class="mv">&nbsp;'+escHTML(invNo)+'</td></tr>'+
+          '<tr><td class="ml">Date:</td><td class="mv">&nbsp;'+escHTML(dateStr)+'</td></tr>'+
+        '</table>'+
+      '</div>'+
+    '</div></div>'+
+    '<div class="wkb-kepada"><table class="kepada-tbl"><tr>'+
+      '<td class="kl">Kepada:</td><td class="kv">'+clientLines.map(escHTML).join('<br>')+'</td>'+
+    '</tr></table></div>';
+
+  var headerOLE='<div class="ole-hd">'+
+    '<div class="ole-co-name">'+co.name+'</div>'+
+    '<div class="ole-co-addr">'+co.addr+'</div>'+
+    '<div class="ole-mid">'+
+      '<div class="ole-client">'+clientLines.map(function(l){return'<div>'+escHTML(l)+'</div>';}).join('')+'</div>'+
+      '<div class="ole-inv-block">'+
+        '<div class="ole-inv-word">INVOICE</div>'+
+        '<div class="ole-inv-meta">INV - '+escHTML(invNo)+'<br>Date: '+escHTML(dateStr)+'</div>'+
+      '</div>'+
+    '</div></div>';
+
+  var header=company==='wkb'?headerWKB:(company==='ole'?headerOLE:headerABR);
+
+  var titleBlock=company==='ole'
+    ?'<div class="ole-title-blk">'+
+        '<div class="ole-title-row"><span class="ole-title-lbl">Title:</span>&nbsp;<span class="ole-title-val">'+escHTML(titleEn)+'</span></div>'+
+      '</div>'
+    :'<div class="title-blk'+(company==='wkb'?' wkb':'')+'"><table class="title-tbl"><tr>'+
+        '<td class="tl">Title :</td>'+
+        '<td class="tv">'+escHTML(titleEn)+
+        (titleRef?'<div class="title-ref">'+escHTML(titleRef)+'</div>':'')+
+        '</td></tr></table></div>';
+
+  // ── INVOICE PAGE ──
+  if(page==='invoice'){
+    var sub=0;
+    var rowsArr=items.map(function(item,i){
+      var qty=parseFloat(item.qty)||0,rate=parseFloat(item.rate)||0;
+      var amt=parseFloat(item.amount);
+      if(isNaN(amt))amt=(qty&&rate)?qty*rate:0;
+      sub+=amt;
+      if(company==='ole'){
+        return '<tr'+(i===items.length-1?' class="last-item-row"':'')+'>'+
+          '<td class="ole-td-item">'+escHTML(item.num||String(i+1))+'</td>'+
+          '<td class="ole-td-desc">'+escHTML(item.desc||'').replace(/\n/g,'<br>')+'</td>'+
+          '<td class="ole-td-c">'+escHTML(item.qty||'')+'</td>'+
+          '<td class="ole-td-c">'+escHTML(item.unit||'')+'</td>'+
+          '<td class="ole-td-rate">'+(item.rate?parseFloat(item.rate).toFixed(2):'')+'</td>'+
+          '<td class="ole-td-r">'+(amt?amt.toFixed(2):'')+'</td>'+
+          '</tr>';
+      }
+      return '<tr'+(i===items.length-1?' class="last-item-row"':'')+'>'+
+        '<td class="td-item">'+escHTML(item.num||String(i+1))+'</td>'+
+        '<td class="td-desc">'+escHTML(item.desc||'').replace(/\n/g,'<br>')+'</td>'+
+        '<td class="td-c">'+escHTML(item.qty||'')+'</td>'+
+        '<td class="td-c">'+escHTML(item.unit||'')+'</td>'+
+        '<td class="td-rate">'+(item.rate?parseFloat(item.rate).toFixed(2):'')+'</td>'+
+        '<td class="td-r">'+(amt?amt.toFixed(2):'')+'</td>'+
+        '</tr>';
+    });
+    var rows=rowsArr.join('');
+    var sstAmt=0,sstVal='';
+    if(sstRate==='8'){sstAmt=sub*0.08;sstVal=sstAmt.toFixed(2);}
+    if(sstRate==='6'){sstAmt=sub*0.06;sstVal=sstAmt.toFixed(2);}
+    var grand=sub+sstAmt;
+
+    if(company==='ole'){
+      var oleTotRows=
+        '<tr class="tot-row"><td colspan="4" class="tot-merge tot-merge-top"></td>'+
+          '<td class="tot-lbl ole-tot-lbl">Sub-Total :</td><td class="td-r tot-val ole-tot-val">'+sub.toFixed(2)+'</td></tr>'+
+        '<tr class="tot-row"><td colspan="4" class="tot-merge tot-merge-mid"></td>'+
+          '<td class="tot-lbl ole-tot-lbl">SST 8% :</td><td class="td-r tot-val ole-tot-val">'+(sstVal||'—')+'</td></tr>'+
+        '<tr class="tot-row tot-grand"><td colspan="4" class="tot-merge tot-merge-bot"></td>'+
+          '<td class="tot-lbl ole-tot-lbl tot-lbl-grand">Total :</td><td class="td-r tot-val ole-tot-val tot-val-grand">'+grand.toFixed(2)+'</td></tr>';
+      return '<div class="a4">'+header+titleBlock+
+        '<div class="ole-inv-body"><table class="ole-tbl"><thead><tr>'+
+        '<th class="ole-th-l" style="width:44px">ITEM</th><th>DESCRIPTION</th>'+
+        '<th style="width:42px">QTY</th><th style="width:46px">UNIT</th>'+
+        '<th style="width:62px">RATE<br>(RM)</th><th style="width:62px">AMOUNT<br>(RM)</th>'+
+        '</tr></thead><tbody>'+rows+oleTotRows+'</tbody></table></div>'+
+        '<div class="ole-sign-blk"><div class="ole-sign-prep">Prepared by :</div>'+
+        '<div style="height:30px"></div><div class="ole-sign-name">('+escHTML(signName)+')</div></div>'+
+        '</div>';
+    }
+
+    var totRows=
+      '<tr class="tot-row"><td colspan="4" class="tot-merge tot-merge-top"></td>'+
+        '<td class="tot-lbl">Sub-Total :</td><td class="td-r tot-val">'+sub.toFixed(2)+'</td></tr>'+
+      '<tr class="tot-row"><td colspan="4" class="tot-merge tot-merge-mid"></td>'+
+        '<td class="tot-lbl">SST 8% :</td><td class="td-r tot-val">'+(sstVal||'—')+'</td></tr>'+
+      '<tr class="tot-row tot-grand"><td colspan="4" class="tot-merge tot-merge-bot"></td>'+
+        '<td class="tot-lbl tot-lbl-grand">Total :</td><td class="td-r tot-val tot-val-grand">'+grand.toFixed(2)+'</td></tr>';
+    return '<div class="a4">'+header+titleBlock+
+      '<div class="inv-body'+(company==='wkb'?' wkb':'')+'"><table class="tbl"><thead><tr>'+
+      '<th class="th-l" style="width:42px">ITEM</th><th>DESCRIPTION</th>'+
+      '<th style="width:40px">QTY</th><th style="width:44px">UNIT</th>'+
+      '<th style="width:46px">RATE<br>(RM)</th><th style="width:62px">AMOUNT<br>(RM)</th>'+
+      '</tr></thead><tbody>'+rows+totRows+'</tbody></table></div>'+
+      (company==='abr'?'<div class="sign-blk"><div class="sign-prep">Prepared by :</div>'+
+      '<div style="height:30px"></div><div class="sign-name">('+escHTML(signName)+')</div></div>':'')+(company==='wkb'?(function(){
+        var bank=gv('f-wkb-bank');var accname=gv('f-wkb-accname');var accno=gv('f-wkb-accno');
+        var payBlock=bank||accname||accno?
+          '<div class="wkb-pay-blk">'+
+            '<div class="wkb-pay-center">All cheque / payment are made payable to :</div>'+
+            '<div class="wkb-pay-detail">'+
+              (accname?'Name: '+escHTML(accname)+'<br>':'')+
+              (bank?'Bank: '+escHTML(bank)+'<br>':'')+
+              (accno?'Acc. No: '+escHTML(accno):'')+'</div></div>':'';
+        return payBlock+
+          '<div class="wkb-sign-blk"><div class="wkb-sign-prep">Prepared by,</div>'+
+          '<div class="wkb-sign-dots">&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;</div>'+
+          '<div class="wkb-sign-name">'+escHTML(signName)+'</div></div>';
+      })():'')+
+      '</div>';
+  }
+
+  // ── PHOTOS PAGE ──
+  if(page==='photos'){
+    var photoItems=photos.filter(function(p){return(p.before||[]).length||(p.progress||[]).length||(p.after||[]).length;});
+    var ptitle=photoTitle||titleEn;
+
+    if(company==='ole'){
+      // OLE: 2-column mosaic with black label banners
+      var oleRows=photoItems.map(function(item){
+        var slots=['before','progress','after'].map(function(s){
+          var imgs=(item[s]||[]).map(function(src){return'<img src="'+src+'" class="ph-ole-img">';}).join('');
+          if(!imgs)return'';
+          return'<div class="ph-ole-slot">'+
+            '<div class="ph-ole-slot-lbl">'+s.toUpperCase()+'</div>'+
+            '<div class="ph-ole-imgs">'+imgs+'</div>'+
+            '</div>';
+        }).filter(Boolean).join('');
+        if(!slots)return'';
+        return'<div class="ph-ole-row">'+
+          '<div class="ph-ole-row-hd">'+
+            '<span class="ph-ole-row-num">'+escHTML(item.invoiceNum||'')+'</span>'+
+            (item.desc?'<span class="ph-ole-row-desc">'+escHTML(item.desc)+'</span>':'')+
+          '</div>'+
+          '<div class="ph-ole-grid">'+slots+'</div>'+
+        '</div>';
+      }).filter(Boolean).join('');
+      return '<div class="a4 ph-pg-ole">'+
+        '<div class="ph-title-ole">'+escHTML(ptitle)+'</div>'+
+        '<div class="ph-ole-rows">'+oleRows+'</div>'+
+        '</div>';
+    }
+
+    if(company==='wkb'){
+      // WKB: table-based format
+      if(!photoItems.length){
+        return '<div class="a4 ph-pg-wkb"><div class="ph-title-wkb"><u>'+escHTML(ptitle)+'</u></div>'+
+          '<div class="ph-tbl-wrap"><table class="ph-tbl"><thead><tr><th class="ph-th-l">ITEM</th><th>BEFORE</th><th>PROGRESS</th><th>AFTER</th></tr></thead><tbody></tbody></table></div></div>';
+      }
+      var wkbRows=photoItems.map(function(item){
+        var cells=['before','progress','after'].map(function(s){
+          var imgs=(item[s]||[]).map(function(src){return'<img src="'+src+'">';}).join('');
+          return'<td class="ph-td-img">'+imgs+'</td>';
+        }).join('');
+        return'<tr><td class="ph-td-num">'+escHTML(item.invoiceNum||'')+'</td>'+cells+'</tr>';
+      }).join('');
+      return '<div class="a4 ph-pg-wkb"><div class="ph-title-wkb"><u>'+escHTML(ptitle)+'</u></div>'+
+        '<div class="ph-tbl-wrap"><table class="ph-tbl"><thead><tr><th class="ph-th-l">ITEM</th><th>BEFORE</th><th>PROGRESS</th><th>AFTER</th></tr></thead>'+
+        '<tbody>'+wkbRows+'</tbody></table></div></div>';
+    }
+
+    // ABR: card layout
+    var colHds='<div class="ph-col-hd-row">'+
+      '<div class="ph-col-hd-item">ITEM</div>'+
+      '<div class="ph-col-hd">BEFORE</div><div class="ph-col-hd">PROGRESS</div><div class="ph-col-hd">AFTER</div></div>';
+    if(!photoItems.length){
+      return '<div class="a4 ph-pg"><div class="ph-title">'+escHTML(ptitle)+'</div><hr class="ph-title-divider">'+colHds+'</div>';
+    }
+    var USABLE=1040,TITLE_H=80,HEADER_H=44,PHOTO_H=172,ITEM_GAP=16;
+    var pages=[],cur=[],curH=TITLE_H+HEADER_H;
+    photoItems.forEach(function(item){
+      var maxPh=Math.max((item.before||[]).length,(item.progress||[]).length,(item.after||[]).length,1);
+      var rowH=maxPh*PHOTO_H+ITEM_GAP;
+      if(cur.length>0&&curH+rowH>USABLE){pages.push({items:cur.slice(),first:pages.length===0});cur=[];curH=HEADER_H;}
+      cur.push(item);curH+=rowH;
+    });
+    if(cur.length)pages.push({items:cur,first:pages.length===0});
+    return pages.map(function(pg){
+      var rowsHTML=pg.items.map(function(item){
+        var slots=['before','progress','after'].map(function(s){
+          return '<div class="ph-slot">'+
+            (item[s]||[]).map(function(src){
+              return '<div class="ph-img-wrap"><img src="'+src+'" class="ph-img"></div>';
+            }).join('')+
+            '</div>';
+        }).join('');
+        return '<div class="ph-row"><div class="ph-row-num">'+escHTML(item.invoiceNum||'')+'</div>'+
+          '<div class="ph-row-cols">'+slots+'</div></div>';
+      }).join('');
+      return '<div class="a4 ph-pg">'+
+        (pg.first?'<div class="ph-title">'+escHTML(ptitle)+'</div><hr class="ph-title-divider">':'')+
+        colHds+'<div class="ph-rows">'+rowsHTML+'</div></div>';
+    }).join('');
+  }
+
+  // ── LETTER COMMON ──
+  var calcAmt=(function(){
+    var s=0;
+    items.forEach(function(item){
+      var a=parseFloat(item.amount);
+      if(isNaN(a)){var q=parseFloat(item.qty)||0,r=parseFloat(item.rate)||0;a=(q&&r)?q*r:0;}
+      s+=a;
+    });
+    var tax=0;
+    if(sstRate==='8')tax=s*0.08;
+    if(sstRate==='6')tax=s*0.06;
+    return s+tax>0?'RM'+(s+tax).toFixed(2):'';
+  })();
+  var amtStr=grandAmt||calcAmt;
+  var ltrHd=company==='wkb'
+    ?'<div class="ltr-co-name">WARISAN KENCANA BORNEO (155994T)</div>'+
+      '<div class="ltr-co-addr">Unit 3, Tingkat 1, Blok D, Metro Town, Kota Kinabalu, Sabah, Malaysia</div>'
+    :company==='ole'
+    ?'<div class="ltr-co-name">One-Lin Enterprise</div>'+
+      '<div class="ltr-co-addr">B-4-2, 4th Floor, Block B, Plaza Tanjung Aru, 88858 Kota Kinabalu, Sabah</div>'
+    :'<div class="ltr-co-name">ABR Services</div>'+
+      '<div class="ltr-co-addr">Lot\u00a0 F-2-10, 2<sup>nd</sup> Floor, Block F, Plaza Tanjung Aru, Jalan Mat Salleh, 88100 KK, Sabah.</div>';
+  var ltrClient=clientLines.map(function(l){return'<div>'+escHTML(l)+'</div>';}).join('');
+  var ltrSign='<div class="ltr-yang">Yang benar,</div><div class="ltr-sign-gap"></div>'+
+    '<div class="ltr-dots">&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;&#x2026;</div>'+
+    '<div class="ltr-sname">('+escHTML(signName)+')</div>';
+
+  function buildLtrTop(prefix){
+    var lKontrak=gv('f-'+prefix+'-kontrak');
+    var lProjek=gv('f-'+prefix+'-projek');
+    var lSebut=gv('f-'+prefix+'-sebut');
+    return ltrHd+'<div class="ltr-space-top"></div>'+
+      '<div class="ltr-tarikh">Tarikh :</div>'+
+      '<div class="ltr-client-block">'+ltrClient+'</div>'+
+      '<div class="ltr-tuan">Tuan,</div>'+
+      (lKontrak?'<div class="ltr-kontrak">KONTRAK NO: '+escHTML(lKontrak)+'</div>':'')+
+      (lProjek?'<div class="ltr-projek-row"><span class="ltr-projek-lbl">PROJEK:</span>'+
+        '<span class="ltr-projek-val"><strong>'+escHTML(lProjek)+'</strong></span></div>':'')+
+      (lSebut?'<div class="ltr-sebut">SEBUTHARGA: '+escHTML(lSebut)+'</div>':'');
+  }
+
+  if(page==='wages'){
+    return '<div class="a4 ltr-pg">'+buildLtrTop('wages')+
+      '<div class="ltr-perkara">'+escHTML(wagesTitle)+'</div>'+
+      '<div class="ltr-body">'+escHTML(wagesBody)+'</div>'+
+      ltrSign+'</div>';
+  }
+  if(page==='sst'){
+    return '<div class="a4 ltr-pg">'+buildLtrTop('sst')+
+      '<div class="ltr-perkara">'+escHTML(sstTitle)+'</div>'+
+      '<div class="ltr-body">'+escHTML(sstBody)+'</div>'+
+      ltrSign+'</div>';
+  }
+
+  // ── ALL PAGES ──
+  if(page==='all'){
+    return buildPageHTML('invoice')+buildPageHTML('photos')+buildPageHTML('wages')+buildPageHTML('sst');
+  }
+  return '';
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+window.onload = function(){
+  sv('f-inv-no','JKR 2025 0123');
+  sv('f-contract','JBN 53 AC 194554');
+  sv('f-title-en','Repair Works \u2013 To Replace Damaged Lock Set, Bidet Spray, Water Tap and Other Related Works at JBKK Office');
+  sv('f-title-ref','JBN 53 AC 194554');
+  sv('f-cl-name','Jurutera Bahagian');
+  sv('f-cl-a1','Kawasan Pantai Barat Tengah,');
+  sv('f-cl-a2','JKR, Kota Kinabalu,');
+  sv('f-cl-a3','Sabah.');
+  sv('f-sign','Asram Bin Rasmun');
+  sv('f-ic','830601-12-5195');
+  sv('f-grand-amount','');
+  sv('f-photo-title','');
+  sv('f-wkb-bank','STANDARD CHARTERED');
+  sv('f-wkb-accname','WARISAN KENCANA BORNEO');
+  sv('f-wkb-accno','3 9 0 1 9 4 7 0 4 1 7 1');
+  sv('f-wages-kontrak','JBN 53 AC 194554');
+  sv('f-wages-projek','Repair Works \u2013 To Replace Damaged Lock Set, Bidet Spray, Water Tap and Other Related Works at JBKK Office');
+  sv('f-wages-sebut','');
+  sv('f-wages-title','PERKARA: PENGESAHAN TIADA GAJI YANG TERTUNGGAK');
+  sv('f-wages-body','Dengan segala hormatnya perkara di atas adalah dirujuk.\n\n2.  Untuk makluman pihak Tuan, \u201cTiada gaji yang tertunggak kepada pekerja-pekerja melainkan Dimana sijil ini disediakan\u201d.\n\n3.  Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai.\n\nSekian, terima kasih.');
+  sv('f-sst-kontrak','JBN 53 AC 194554');
+  sv('f-sst-projek','Repair Works \u2013 To Replace Damaged Lock Set, Bidet Spray, Water Tap and Other Related Works at JBKK Office');
+  sv('f-sst-sebut','');
+  sv('f-sst-title','PER: PENGESAHAN TIDAK BERDAFTAR SALES AND SERVICE TAX (SST) SYARIKAT');
+  sv('f-sst-body','Dengan segala hormatnya perkara di atas adalah dirujuk.\n\n2.  Bahawasanya saya Asram Bin Rasmun (NO IC: 830601-12-5195) pemilik Syarikat ABR Services mengesahkan bahawa syarikat kami tidak berdaftar untuk SALES AND SERVICE TAX (SST) di Jabatan Kastam Diraja Malaysia.\n\n3.  Disebabkan syarikat kami tidak mempunyai nilai Perkhidmatan Bercukai RM500,000.00 yang ditetapkan dalam tempoh 12 bulan. Oleh itu, pihak syarikat tidak akan menuntut sebarang cukai SST daripada pihak Jabatan untuk sebarang tuntutan bayaran syarikat kami.\n\n4.  Kerjasama dan perhatian dari pihak Tuan ke atas perkara ini amatlah dihargai. Sebarang perubahan akan dimaklumkan kelak.\n\nSekian, terima kasih.');
+  items=[
+    {num:'1',desc:'Preliminaries',qty:'',unit:'SUM',rate:'',amount:'650.00'},
+    {num:'2',desc:'To replace damage door lock set at male and female toilet near Mini Hall.',qty:'2',unit:'NOS',rate:'80.00',amount:''},
+    {num:'3.1',desc:'To fabricate and install custom laser cut signage \u2013 Jurutera Bahagian Room (150mm H \u00d7 635mm L)',qty:'1',unit:'NOS',rate:'700.00',amount:''},
+    {num:'3.2',desc:'To fabricate and install custom laser cut signage \u2013 PA Room (150mm H \u00d7 455mm L)',qty:'1',unit:'NOS',rate:'550.00',amount:''},
+    {num:'4',desc:'To repair damage wall at PA Room.',qty:'',unit:'SUM',rate:'',amount:'700.00'}
+  ];
+  photos=[{invoiceNum:'2',desc:'Door lock set',before:[],progress:[],after:[]}];
+  renderItems();
+  renderPhotoEd();
+  push();
+};
+</script>
+</body>
+</html>
